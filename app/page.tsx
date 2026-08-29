@@ -140,7 +140,7 @@ export default function Home() {
                 </Link>
               ))}
             </div>
-            </div>
+          
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             {mounted && isConnected ? (
