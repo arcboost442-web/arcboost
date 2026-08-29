@@ -59,6 +59,26 @@ export default function CreateToken() {
     setError("");
   };
 
+  const compressImage = (file: File): Promise<File> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement("canvas");
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 512;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = (h / w) * MAX; w = MAX; }
+        else { w = (w / h) * MAX; h = MAX; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => {
+        resolve(new File([blob!], file.name, { type: "image/jpeg" }));
+      }, "image/jpeg", 0.8);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+};
 
 const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
@@ -73,10 +93,11 @@ const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
   // Upload ke Pinata
   try {
     setUploading(true);
+        const compressed = await compressImage(file);
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", compressed);
 
-    const res = await fetch("/api/upload", {
+    const res = await fetch("/api/upload-image", {
       method: "POST",
       body: formData,
     });

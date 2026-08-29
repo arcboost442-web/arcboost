@@ -4,16 +4,10 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    
     if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
 
-    const buffer = await file.arrayBuffer();
-    const blob = new Blob([buffer], { type: file.type });
-
     const pinataForm = new FormData();
-    pinataForm.append("file", blob, file.name);
-    pinataForm.append("pinataMetadata", JSON.stringify({ name: file.name }));
-    pinataForm.append("pinataOptions", JSON.stringify({ cidVersion: 1 }));
+    pinataForm.append("file", file);
 
     const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
       method: "POST",
@@ -24,13 +18,11 @@ export async function POST(req: NextRequest) {
       body: pinataForm,
     });
 
-    if (!res.ok) throw new Error("Pinata upload failed");
-    
     const data = await res.json();
-    const url = `https://gateway.pinata.cloud/ipfs/${data.IpfsHash}`;
-    
-    return NextResponse.json({ url });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    if (!res.ok) return NextResponse.json({ error: data }, { status: 500 });
+
+    return NextResponse.json({ url: `https://gateway.pinata.cloud/ipfs/${data.IpfsHash}` });
+  } catch {
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }
