@@ -13,7 +13,7 @@ const arcTestnet = defineChain({
   testnet: true,
 });
 
-const FACTORY_ADDRESS = "0xeF7d51a1b3a2501C6247C4F6f29b558c7F23a115" as const;
+const FACTORY_ADDRESS = "0xa6481C04C85D24b3596675E9D2c5CFFCa770F248" as const;
 const FACTORY_ABI = [
   { name: "createToken", type: "function", stateMutability: "payable",
     inputs: [
