@@ -84,17 +84,16 @@ export default function TokenPage() {
   const [txs, setTxs]           = useState<TxItem[]>([]);
   const [activeTab, setTab]     = useState<"discussion"|"txs">("discussion");
   const [comment, setComment]   = useState("");
-  const [comments, setComments] = useState<Comment[]>([
-    { addr: "0xaB3d...f12e", text: "Strong fundamentals. Bonding curve moving well.", time: "2m ago", likes: 14 },
-    { addr: "0x7f2c...c44a", text: "Who is the dev? This project looks interesting.", time: "8m ago", likes: 5 },
-    { addr: "0x3d9f...a71b", text: "Bought the dip. Let it ride.", time: "15m ago", likes: 32 },
-  ]);
-
+ const [comments, setComments] = useState<Comment[]>([]);
   useEffect(() => {
-    loadToken();
-    setTimeout(() => loadChartData(), 1500);
-    setTimeout(() => loadTxs(), 3000);
-  }, []);
+  loadToken();
+  setTimeout(() => loadChartData(), 1500);
+  setTimeout(() => loadTxs(), 3000);
+
+  // Load comments from localStorage
+  const stored = localStorage.getItem(`comments-${tokenAddress}`);
+  if (stored) setComments(JSON.parse(stored));
+}, []);
 
   const loadToken = async () => {
     try {
@@ -178,11 +177,22 @@ export default function TokenPage() {
     setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
   });
 
-  const postComment = () => {
-    if (!comment.trim()) return;
-    setComments([{addr:address?`${address.slice(0,6)}...${address.slice(-4)}`:"0xAnon", text:comment, time:"just now", likes:0},...comments]);
-    setComment("");
+const postComment = () => {
+  if (!comment.trim()) return;
+  if (!isConnected) return setError("Connect wallet to comment.");
+  
+  const newComment: Comment = {
+    addr: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "0xAnon",
+    text: comment.trim(),
+    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    likes: 0,
   };
+  
+  const updated = [newComment, ...comments];
+  setComments(updated);
+  localStorage.setItem(`comments-${tokenAddress}`, JSON.stringify(updated));
+  setComment("");
+};
 
   if (loading) return (
     <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui"}}>
