@@ -18,7 +18,7 @@ const publicClient = createPublicClient({
   transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
 });
 
-const FACTORY_ADDRESS = "0xa6481C04C85D24b3596675E9D2c5CFFCa770F248" as const;
+const FACTORY_ADDRESS = "0x47E2216DB1F312dfeAD33B08777FbA11b41d9316" as const;
 const FACTORY_ABI = [
   { name: "getAllTokens", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "address[]" }] },
   { name: "tokenInfo", type: "function", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [
