@@ -1,0 +1,396 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAccount, useDisconnect } from "wagmi";
+import { createPublicClient, http, formatEther, defineChain } from "viem";
+import Link from "next/link";
+
+const arcTestnet = defineChain({
+  id: 5042002,
+  name: "Arc Testnet",
+  nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 6 },
+  rpcUrls: { default: { http: ["https://rpc.testnet.arc.io"] } },
+  testnet: true,
+});
+
+const publicClient = createPublicClient({
+  chain: arcTestnet,
+  transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
+});
+
+const FACTORY_ADDRESS = "0xeF7d51a1b3a2501C6247C4F6f29b558c7F23a115" as const;
+const FACTORY_ABI = [
+  { name: "getAllTokens", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "address[]" }] },
+  { name: "tokenInfo", type: "function", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [
+    { name: "tokenAddress", type: "address" }, { name: "name", type: "string" },
+    { name: "symbol", type: "string" }, { name: "imageURI", type: "string" },
+    { name: "description", type: "string" }, { name: "creator", type: "address" },
+    { name: "createdAt", type: "uint256" },
+  ]},
+] as const;
+
+const TOKEN_ABI = [
+  { name: "ethCollected", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { name: "graduated", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "bool" }] },
+] as const;
+
+// Arc Design System — vivid & professional
+const BG       = "#08090F";
+const CARD     = "#0E1118";
+const CARD2    = "#111622";
+const BORDER   = "#1C2235";
+const BORDER2  = "#232B42";
+const BLUE     = "#2563EB";
+const BLUE_LT  = "#3B82F6";
+const BLUE_DIM = "#0F1A35";
+const BLUE_B   = "rgba(59,130,246,0.15)";
+const CYAN     = "#06B6D4";
+const TEXT     = "#F1F5FF";
+const SUB      = "#94A3B8";
+const DIM      = "#374151";
+const GRAD     = "linear-gradient(135deg, #2563EB 0%, #06B6D4 100%)";
+const GRAD2    = "linear-gradient(135deg, #1E3A8A 0%, #0E7490 100%)";
+
+type Token = { tokenAddress: string; name: string; symbol: string; imageURI: string; description: string; creator: string; ethCollected: number; graduated: boolean; };
+
+export default function Home() {
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+  const [mounted, setMounted] = useState(false);
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [tab, setTab] = useState("All");
+
+  useEffect(() => { setMounted(true); loadTokens(); }, []);
+
+  const loadTokens = async () => {
+    try {
+      const addrs = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" });
+      const data = await Promise.all(addrs.map(async (addr) => {
+        const info = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "tokenInfo", args: [addr] });
+        let ethCollected = 0, graduated = false;
+        try {
+          const [eth, grad] = await Promise.all([
+            publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "ethCollected" }),
+            publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "graduated" }),
+          ]);
+          ethCollected = parseFloat(formatEther(eth));
+          graduated = grad as boolean;
+        } catch {}
+        return { tokenAddress: info[0], name: info[1], symbol: info[2], imageURI: info[3], description: info[4], creator: info[5], ethCollected, graduated };
+      }));
+      setTokens(data.reverse());
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  };
+
+  const connectWallet = async () => {
+    if (typeof window.ethereum !== "undefined") {
+      try { await window.ethereum.request({ method: "eth_requestAccounts" }); window.location.reload(); }
+      catch (err) { console.error(err); }
+    }
+  };
+
+  const getBadge = (t: Token) => {
+    const pct = (t.ethCollected / 1) * 100;
+    if (t.graduated) return { label: "Graduated", bg: BLUE_DIM, color: BLUE_LT, border: BLUE_B };
+    if (pct >= 80) return { label: "Near Grad", bg: "#0E2420", color: "#34D399", border: "rgba(52,211,153,0.15)" };
+    if (pct > 40) return { label: "Trending", bg: "#1A1200", color: "#FBBF24", border: "rgba(251,191,36,0.15)" };
+    return { label: "New", bg: "#0F172A", color: SUB, border: BORDER2 };
+  };
+
+  const filtered = tokens.filter(t => {
+    const q = search.toLowerCase();
+    const match = t.name.toLowerCase().includes(q) || t.symbol.toLowerCase().includes(q);
+    const pct = (t.ethCollected / 1) * 100;
+    if (tab === "Trending") return match && pct > 40 && !t.graduated;
+    if (tab === "New") return match && pct < 20;
+    if (tab === "Near Grad") return match && pct >= 80 && !t.graduated;
+    if (tab === "Graduated") return match && t.graduated;
+    return match;
+  });
+
+  const topToken = tokens[0];
+  const totalVol = tokens.reduce((a, t) => a + t.ethCollected, 0);
+
+  return (
+    <main style={{ minHeight: "100vh", background: BG, color: TEXT, fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif" }}>
+
+      {/* AMBIENT GLOW */}
+      <div style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "800px", height: "400px", background: "radial-gradient(ellipse at 50% 0%, rgba(37,99,235,0.12) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+
+      <div style={{ position: "relative", zIndex: 1 }}>
+
+        {/* NAVBAR */}
+        <nav style={{ borderBottom: `1px solid ${BORDER}`, padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "60px", background: "rgba(8,9,15,0.85)", backdropFilter: "blur(16px)", position: "sticky", top: 0, zIndex: 100 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
+            {/* LOGO */}
+            <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
+              <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: GRAD, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              </div>
+              <span style={{ fontWeight: 700, fontSize: "16px", letterSpacing: "-.3px", background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ArcBoost</span>
+            </div>
+            {/* NAV LINKS */}
+            <div style={{ display: "flex", gap: "4px" }}>
+              {["Markets", "Launch", "Portfolio"].map((l, i) => (
+                <button key={l} style={{ padding: "6px 14px", borderRadius: "7px", fontSize: "13px", color: i === 0 ? TEXT : SUB, cursor: "pointer", border: "none", background: i === 0 ? CARD2 : "none", fontFamily: "inherit", fontWeight: i === 0 ? 500 : 400 }}>{l}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            {mounted && isConnected ? (
+              <>
+                <div style={{ background: CARD, border: `1px solid ${BORDER2}`, borderRadius: "8px", padding: "7px 14px", fontSize: "13px", display: "flex", alignItems: "center", gap: "7px" }}>
+                  <div style={{ width: "7px", height: "7px", background: "#34D399", borderRadius: "50%", boxShadow: "0 0 6px #34D399" }} />
+                  <span style={{ color: SUB, fontFamily: "monospace", fontSize: "12px" }}>{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+                </div>
+                <button onClick={() => disconnect()} style={{ background: "transparent", color: DIM, border: `1px solid ${BORDER}`, padding: "7px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                </button>
+              </>
+            ) : (
+              <button onClick={connectWallet} style={{ background: CARD, border: `1px solid ${BORDER2}`, color: TEXT, borderRadius: "8px", padding: "7px 16px", fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", gap: "7px", fontFamily: "inherit" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
+                Connect Wallet
+              </button>
+            )}
+            <Link href="/create">
+              <button style={{ background: GRAD, color: "#fff", border: "none", borderRadius: "8px", padding: "8px 18px", fontSize: "13px", fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 20px rgba(37,99,235,0.35)", fontFamily: "inherit" }}>
+                Launch Token
+              </button>
+            </Link>
+          </div>
+        </nav>
+
+        {/* HERO */}
+        <div style={{ padding: "56px 32px 40px", textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: BLUE_DIM, border: `1px solid ${BLUE_B}`, borderRadius: "20px", padding: "5px 14px", fontSize: "11px", fontWeight: 600, color: BLUE_LT, marginBottom: "20px", letterSpacing: ".04em", textTransform: "uppercase" }}>
+            <div style={{ width: "6px", height: "6px", background: CYAN, borderRadius: "50%", boxShadow: `0 0 8px ${CYAN}` }} />
+            Live on Arc Testnet
+          </div>
+          <h1 style={{ fontSize: "48px", fontWeight: 800, lineHeight: 1.1, color: TEXT, margin: "0 0 12px", letterSpacing: "-1.5px" }}>
+            The permissionless<br />
+            <span style={{ background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>token launchpad</span>
+          </h1>
+          <p style={{ color: SUB, fontSize: "15px", maxWidth: "480px", margin: "0 auto 28px", lineHeight: "1.65" }}>
+            Deploy tokens instantly on Arc. Trade on bonding curves. Graduate to DEX automatically when market cap is reached.
+          </p>
+          <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+            <Link href="/create">
+              <button style={{ background: GRAD, color: "#fff", border: "none", borderRadius: "10px", padding: "13px 28px", fontSize: "14px", fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 32px rgba(37,99,235,0.4)", fontFamily: "inherit" }}>
+                Launch a Token
+              </button>
+            </Link>
+            <button style={{ background: CARD, color: TEXT, border: `1px solid ${BORDER2}`, borderRadius: "10px", padding: "13px 28px", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>
+              How it works
+            </button>
+          </div>
+        </div>
+
+        {/* STATS */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "12px", padding: "0 32px", maxWidth: "1100px", margin: "0 auto 32px" }}>
+          {[
+            { label: "Tokens Launched", value: tokens.length.toString(), sub: "On Arc Testnet" },
+            { label: "Total Volume", value: `${totalVol.toFixed(3)} USDC`, sub: "All-time" },
+            { label: "Avg. Weekly Tx Cost", value: "$0.004", sub: "Predictable fees" },
+            { label: "Network", value: "Arc", sub: "Stablecoin-native L1" },
+          ].map(s => (
+            <div key={s.label} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "18px", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: 0, right: 0, width: "60px", height: "60px", background: "radial-gradient(circle at 100% 0%, rgba(37,99,235,0.08) 0%, transparent 70%)" }} />
+              <div style={{ fontSize: "10px", color: SUB, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: "6px" }}>{s.label}</div>
+              <div style={{ fontSize: "22px", fontWeight: 700, color: TEXT, letterSpacing: "-.5px", marginBottom: "3px" }}>{s.value}</div>
+              <div style={{ fontSize: "11px", color: DIM }}>{s.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* TICKER */}
+        {tokens.length > 0 && (
+          <div style={{ background: CARD, borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: "10px 32px", display: "flex", alignItems: "center", gap: "14px", marginBottom: "32px", overflowX: "auto" }}>
+            <div style={{ fontSize: "10px", fontWeight: 700, color: BLUE_LT, letterSpacing: ".08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>Live</div>
+            <div style={{ width: "1px", height: "16px", background: BORDER2, flexShrink: 0 }} />
+            <div style={{ display: "flex", gap: "24px" }}>
+              {tokens.slice(0, 8).map((t, i) => (
+                <div key={t.tokenAddress} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", whiteSpace: "nowrap", cursor: "pointer" }} onClick={() => window.location.href = `/token/${t.tokenAddress}`}>
+                  <span style={{ color: DIM, fontSize: "10px" }}>#{i + 1}</span>
+                  <span style={{ color: TEXT, fontWeight: 600 }}>{t.symbol}</span>
+                  <span style={{ color: CYAN, fontSize: "11px" }}>+{((t.ethCollected / 1) * 100).toFixed(0)}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 32px 60px" }}>
+
+          {/* KING OF THE HILL */}
+          {topToken && (
+            <div style={{ background: `linear-gradient(135deg, ${BLUE_DIM} 0%, #0A1A2E 100%)`, border: `1px solid ${BLUE_B}`, borderRadius: "14px", padding: "20px 24px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "20px", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", right: 0, top: 0, width: "300px", height: "100%", background: "radial-gradient(ellipse at 100% 50%, rgba(6,182,212,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
+              <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: CARD, border: `1px solid ${BORDER2}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                {topToken.imageURI ? <img src={topToken.imageURI} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontWeight: 700, fontSize: "18px", color: BLUE_LT }}>{topToken.symbol?.slice(0, 1)}</span>}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "10px", color: BLUE_LT, textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, marginBottom: "3px" }}>Leading Market</div>
+                <div style={{ fontSize: "17px", fontWeight: 700, color: TEXT }}>{topToken.name} <span style={{ fontSize: "13px", color: BLUE_LT, fontWeight: 500 }}>{topToken.symbol}</span></div>
+              </div>
+              <div style={{ display: "flex", gap: "32px" }}>
+                {[
+                  { label: "Volume", value: `${topToken.ethCollected.toFixed(4)} USDC` },
+                  { label: "Progress", value: `${((topToken.ethCollected / 1) * 100).toFixed(1)}%`, blue: true },
+                  { label: "Status", value: topToken.graduated ? "Graduated" : "Active" },
+                ].map(s => (
+                  <div key={s.label}>
+                    <div style={{ fontSize: "10px", color: SUB, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: "4px" }}>{s.label}</div>
+                    <div style={{ fontSize: "15px", fontWeight: 600, color: s.blue ? CYAN : TEXT }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => window.location.href = `/token/${topToken.tokenAddress}`} style={{ background: GRAD, color: "#fff", border: "none", borderRadius: "8px", padding: "10px 20px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0, boxShadow: "0 4px 16px rgba(37,99,235,0.3)" }}>
+                Trade
+              </button>
+            </div>
+          )}
+
+          {/* FILTER */}
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", background: CARD, border: `1px solid ${BORDER}`, borderRadius: "9px", padding: "3px", gap: "2px" }}>
+              {["All", "Trending", "New", "Near Grad", "Graduated"].map(t => (
+                <button key={t} onClick={() => setTab(t)}
+                  style={{ padding: "6px 14px", borderRadius: "7px", fontSize: "12px", cursor: "pointer", color: tab === t ? TEXT : SUB, border: "none", background: tab === t ? CARD2 : "none", fontFamily: "inherit", fontWeight: tab === t ? 500 : 400, whiteSpace: "nowrap", transition: "all .15s" }}>
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div style={{ flex: 1, minWidth: "200px", position: "relative" }}>
+              <svg style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={SUB} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" placeholder="Search tokens..." value={search} onChange={e => setSearch(e.target.value)}
+                style={{ width: "100%", background: CARD, border: `1px solid ${BORDER}`, borderRadius: "9px", color: TEXT, fontSize: "13px", padding: "9px 12px 9px 34px", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} />
+            </div>
+            <button onClick={loadTokens} style={{ background: CARD, color: SUB, border: `1px solid ${BORDER}`, padding: "9px 14px", borderRadius: "9px", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "inherit" }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+              Refresh
+            </button>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+            <span style={{ fontSize: "12px", color: DIM }}>{loading ? "Loading..." : `${filtered.length} tokens`}</span>
+          </div>
+
+          {/* TOKEN GRID */}
+          {loading ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px" }}>
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "14px", height: "200px", opacity: 0.4 }} />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "80px 0" }}>
+              <div style={{ width: "48px", height: "48px", background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={SUB} strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              </div>
+              <div style={{ color: SUB, fontSize: "14px", marginBottom: "16px" }}>No tokens found.</div>
+              <Link href="/create">
+                <button style={{ background: GRAD, color: "#fff", border: "none", padding: "10px 24px", borderRadius: "8px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Launch the first one</button>
+              </Link>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "32px" }}>
+              {filtered.map((token) => {
+                const pct = Math.min((token.ethCollected / 1) * 100, 100);
+                const badge = getBadge(token);
+                const isTop = token.tokenAddress === topToken?.tokenAddress;
+                return (
+                  <div key={token.tokenAddress}
+                    onClick={() => window.location.href = `/token/${token.tokenAddress}`}
+                    style={{ background: isTop ? `linear-gradient(135deg, ${BLUE_DIM}, #0A1625)` : CARD, border: `1px solid ${isTop ? BLUE_B : BORDER}`, borderRadius: "14px", padding: "18px", cursor: "pointer", transition: "all .2s", position: "relative", overflow: "hidden" }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.border = `1px solid ${BLUE_B}`; el.style.transform = "translateY(-2px)"; el.style.boxShadow = "0 12px 40px rgba(37,99,235,0.12)"; }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.border = `1px solid ${isTop ? BLUE_B : BORDER}`; el.style.transform = "translateY(0)"; el.style.boxShadow = "none"; }}
+                  >
+                    <div style={{ position: "absolute", top: 0, right: 0, width: "80px", height: "80px", background: "radial-gradient(circle at 100% 0%, rgba(37,99,235,0.06) 0%, transparent 70%)" }} />
+
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "14px" }}>
+                      <div style={{ width: "44px", height: "44px", borderRadius: "11px", background: BLUE_DIM, border: `1px solid ${BORDER2}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                        {token.imageURI ? <img src={token.imageURI} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontWeight: 700, fontSize: "16px", color: BLUE_LT }}>{token.symbol?.slice(0, 1)}</span>}
+                      </div>
+                      <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", padding: "3px 8px", borderRadius: "4px", background: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}>
+                        {badge.label}
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: "15px", fontWeight: 700, color: TEXT, marginBottom: "2px", letterSpacing: "-.2px" }}>{token.name}</div>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: BLUE_LT, marginBottom: "6px" }}>{token.symbol}</div>
+                    <div style={{ fontSize: "12px", color: SUB, lineHeight: "1.5", marginBottom: "14px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {token.description || "No description"}
+                    </div>
+
+                    <div style={{ marginBottom: "12px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: DIM, marginBottom: "5px" }}>
+                        <span style={{ textTransform: "uppercase", letterSpacing: ".05em" }}>Bonding Curve</span>
+                        <span style={{ color: pct >= 80 ? CYAN : BLUE_LT, fontWeight: 600 }}>{token.graduated ? "Graduated" : `${pct.toFixed(1)}%`}</span>
+                      </div>
+                      <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: "4px", height: "4px", overflow: "hidden" }}>
+                        <div style={{ height: "4px", borderRadius: "4px", background: pct >= 80 ? `linear-gradient(90deg, ${BLUE_LT}, ${CYAN})` : BLUE_LT, width: `${pct}%`, transition: "width .4s" }} />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ fontSize: "11px", color: DIM }}>
+                        Vol: <span style={{ color: SUB }}>{token.ethCollected.toFixed(4)} USDC</span>
+                      </div>
+                      <div style={{ fontSize: "11px", fontWeight: 600, color: BLUE_LT, display: "flex", alignItems: "center", gap: "4px" }}>
+                        Trade
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* LEADERBOARD */}
+          {tokens.length > 0 && (
+            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "14px", overflow: "hidden" }}>
+              <div style={{ padding: "16px 20px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: TEXT }}>Volume Leaderboard</div>
+                <div style={{ fontSize: "11px", color: DIM }}>Top {Math.min(tokens.length, 5)} tokens</div>
+              </div>
+              {tokens.slice(0, 5).map((t, i) => (
+                <div key={t.tokenAddress} onClick={() => window.location.href = `/token/${t.tokenAddress}`}
+                  style={{ display: "flex", alignItems: "center", gap: "14px", padding: "13px 20px", borderBottom: i < 4 && i < tokens.length - 1 ? `1px solid ${BORDER}` : "none", cursor: "pointer", transition: "background .15s" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = CARD2}
+                  onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = "none"}>
+                  <div style={{ width: "22px", fontSize: "13px", fontWeight: 700, color: i === 0 ? "#F59E0B" : i === 1 ? SUB : i === 2 ? "#CD7F32" : DIM, textAlign: "center" }}>{i + 1}</div>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: BLUE_DIM, border: `1px solid ${BORDER2}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                    {t.imageURI ? <img src={t.imageURI} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontWeight: 700, fontSize: "13px", color: BLUE_LT }}>{t.symbol?.slice(0, 1)}</span>}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "13px", fontWeight: 500, color: TEXT }}>{t.name} <span style={{ fontSize: "11px", color: BLUE_LT }}>{t.symbol}</span></div>
+                  </div>
+                  <div style={{ fontSize: "13px", color: SUB }}>{t.ethCollected.toFixed(4)} USDC</div>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: CYAN }}>+{((t.ethCollected / 1) * 100).toFixed(0)}%</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* FOOTER */}
+        <div style={{ borderTop: `1px solid ${BORDER}`, padding: "24px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ArcBoost</div>
+          <div style={{ display: "flex", gap: "20px" }}>
+            {["Docs", "Twitter", "Discord", "GitHub"].map(l => (
+              <a key={l} href="#" style={{ fontSize: "12px", color: DIM, textDecoration: "none" }}>{l}</a>
+            ))}
+          </div>
+          <div style={{ fontSize: "11px", color: DIM }}>Built on Arc · {new Date().getFullYear()}</div>
+        </div>
+      </div>
+
+      <style>{`* { box-sizing: border-box; } input::placeholder { color: #374151; }`}</style>
+    </main>
+  );
+}
