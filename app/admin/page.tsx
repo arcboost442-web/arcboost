@@ -29,6 +29,7 @@ const FACTORY_ABI = [
   { name: "owner",          type: "function", stateMutability: "view",     inputs: [],                                              outputs: [{ type: "address" }] },
   { name: "setDeployFee",   type: "function", stateMutability: "nonpayable", inputs: [{ name: "newFee",      type: "uint256" }],   outputs: [] },
   { name: "setTreasury",    type: "function", stateMutability: "nonpayable", inputs: [{ name: "newTreasury", type: "address" }],   outputs: [] },
+  { name: "setTokenGradTarget", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenAddr", type: "address" }, { name: "newTarget", type: "uint256" }], outputs: [] },
 ] as const;
 
 const TOKEN_ABI = [
@@ -153,7 +154,22 @@ export default function AdminPage() {
     await wc.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setDeployFee", args: [parseEther(newDeployFee)], account: address! });
     setNewDeployFee("");
   });
-
+const handleSetGradTarget = () => execTx(async () => {
+  if (!newGradTarget || isNaN(Number(newGradTarget))) throw new Error("Invalid target amount.");
+  const { createWalletClient, custom } = await import("viem");
+  const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
+  // Update semua token yang belum graduated
+  const addrs = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" });
+  for (const addr of addrs) {
+    try {
+      const graduated = await publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "graduated" });
+      if (!graduated) {
+        await wc.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setTokenGradTarget", args: [addr, parseEther(newGradTarget)], account: address! });
+      }
+    } catch {}
+  }
+  setNewGradTarget("");
+});
   const connectWallet = async () => {
     if (typeof window.ethereum !== "undefined") {
       try { await window.ethereum.request({ method: "eth_requestAccounts" }); window.location.reload(); }
@@ -284,6 +300,23 @@ export default function AdminPage() {
               {txLoading ? "Submitting..." : "Update Deploy Fee"}
             </button>
           </div>
+          {/* GANTI GRAD TARGET */}
+<div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "18px 20px" }}>
+  <div style={{ fontSize: "10px", fontWeight: 600, color: DIM, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: "4px" }}>Graduation Target</div>
+  <div style={{ fontSize: "12px", color: SUB, marginBottom: "14px" }}>Target USDC yang harus terkumpul sebelum token graduate ke DEX. Berlaku untuk semua token aktif.</div>
+  <input
+    value={newGradTarget}
+    onChange={e => setNewGradTarget(e.target.value)}
+    placeholder="contoh: 1.0"
+    type="number"
+    step="0.1"
+    style={{ width: "100%", background: BG, border: `1px solid ${BORDER2}`, borderRadius: "8px", color: TEXT, fontSize: "13px", padding: "9px 12px", outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: "10px" }}
+  />
+  <button onClick={handleSetGradTarget} disabled={txLoading || !newGradTarget}
+    style={{ width: "100%", background: newGradTarget ? GRAD : BORDER2, color: newGradTarget ? "#fff" : DIM, border: "none", borderRadius: "8px", padding: "10px", fontSize: "13px", fontWeight: 600, cursor: newGradTarget ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "all .15s" }}>
+    {txLoading ? "Submitting..." : "Update Grad Target"}
+  </button>
+</div>
         </div>
 
         {/* TX FEEDBACK */}
