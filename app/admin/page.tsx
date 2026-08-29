@@ -26,13 +26,15 @@ const FACTORY_ABI = [
   { name: "getAllTokens",    type: "function", stateMutability: "view",     inputs: [],                                              outputs: [{ name: "", type: "address[]" }] },
   { name: "deployFee",      type: "function", stateMutability: "view",     inputs: [],                                              outputs: [{ type: "uint256" }] },
   { name: "treasury",       type: "function", stateMutability: "view",     inputs: [],                                              outputs: [{ type: "address" }] },
-  { name: "owner",          type: "function", stateMutability: "view",     inputs: [],                                              outputs: [{ type: "address" }] },
+  { name: "owner",          type: "function", stateMutability: "view",     inputs: [],
+{ name: "withdrawTokenFunds", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenAddr", type: "address" }], outputs: [] },                                              outputs: [{ type: "address" }] },
   { name: "setDeployFee",   type: "function", stateMutability: "nonpayable", inputs: [{ name: "newFee",      type: "uint256" }],   outputs: [] },
   { name: "setTreasury",    type: "function", stateMutability: "nonpayable", inputs: [{ name: "newTreasury", type: "address" }],   outputs: [] },
   { name: "setTokenGradTarget", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenAddr", type: "address" }, { name: "newTarget", type: "uint256" }], outputs: [] },
 ] as const;
 
 const TOKEN_ABI = [
+    { name: "withdrawFunds", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] },
   { name: "ethCollected", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "graduated",    type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "bool"    }] },
 ] as const;
@@ -71,6 +73,7 @@ export default function AdminPage() {
   const [totalTokens, setTotalTokens] = useState(0);
   const [totalVolume, setTotalVolume] = useState(0);
   const [graduatedCount, setGraduatedCount] = useState(0);
+  const [graduatedWithFunds, setGraduatedWithFunds] = useState(0); // ← tambah di sini
 
   // Form state
   const [newTreasury, setNewTreasury] = useState("");
@@ -118,7 +121,11 @@ export default function AdminPage() {
             publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "graduated" }),
           ]);
           vol += parseFloat(formatEther(eth));
-          if (graduated) grad++;
+          if (graduated) {
+  grad++;
+  const bal = await publicClient.getBalance({ address: addr });
+  if (bal > BigInt(0)) setGraduatedWithFunds(prev => prev + 1);
+}
         } catch {}
       }));
 
@@ -169,6 +176,25 @@ const handleSetGradTarget = () => execTx(async () => {
     } catch {}
   }
   setNewGradTarget("");
+});
+const handleWithdraw = () => execTx(async () => {
+  const { createWalletClient, custom } = await import("viem");
+  const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
+  const addrs = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" });
+  let withdrawn = 0;
+  for (const addr of addrs) {
+    try {
+      const graduated = await publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "graduated" });
+      if (graduated) {
+        const balance = await publicClient.getBalance({ address: addr });
+        if (balance > BigInt(0)) {
+          await wc.writeContract({ address: addr, abi: [{ name: "withdrawFunds", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] }], functionName: "withdrawFunds", account: address! });
+          withdrawn++;
+        }
+      }
+    } catch {}
+  }
+  if (withdrawn === 0) throw new Error("No graduated tokens with funds to withdraw.");
 });
   const connectWallet = async () => {
     if (typeof window.ethereum !== "undefined") {
@@ -317,6 +343,26 @@ const handleSetGradTarget = () => execTx(async () => {
     {txLoading ? "Submitting..." : "Update Grad Target"}
   </button>
 </div>
+        {/* WITHDRAW */}
+        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "18px 20px", marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+            <div>
+              <div style={{ fontSize: "10px", fontWeight: 600, color: DIM, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: "4px" }}>Withdraw Graduated Funds</div>
+              <div style={{ fontSize: "12px", color: SUB }}>Tarik USDC dari semua token yang sudah graduated ke wallet treasury.</div>
+            </div>
+            <div style={{ background: GREEN_DIM, border: `1px solid ${GREEN_B}`, borderRadius: "8px", padding: "8px 14px", textAlign: "center", flexShrink: 0 }}>
+              <div style={{ fontSize: "18px", fontWeight: 700, color: GREEN }}>{loading ? "..." : graduatedWithFunds}</div>
+              <div style={{ fontSize: "10px", color: DIM }}>tokens ready</div>
+            </div>
+          </div>
+          <button onClick={handleWithdraw} disabled={txLoading || graduatedWithFunds === 0}
+            style={{ width: "100%", background: graduatedWithFunds > 0 ? "linear-gradient(135deg, #065F46, #047857)" : BORDER2, color: graduatedWithFunds > 0 ? GREEN : DIM, border: `1px solid ${graduatedWithFunds > 0 ? GREEN_B : "transparent"}`, borderRadius: "8px", padding: "11px", fontSize: "13px", fontWeight: 600, cursor: graduatedWithFunds > 0 ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "all .15s", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 7l-5-5-5 5M17 17l-5 5-5-5"/></svg>
+            {txLoading ? "Processing..." : "Withdraw All Graduated Funds"}
+          </button>
+        </div>
+
+        {/* TX FEEDBACK */}
         </div>
 
         {/* TX FEEDBACK */}
