@@ -139,8 +139,8 @@ export default function Home() {
                   <button style={{ padding: "6px 14px", borderRadius: "7px", fontSize: "13px", color: i === 0 ? TEXT : SUB, cursor: "pointer", border: "none", background: i === 0 ? CARD2 : "none", fontFamily: "inherit", fontWeight: i === 0 ? 500 : 400 }}>{l.label}</button>
                 </Link>
               ))}
-            </div>
           
+            </div>
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             {mounted && isConnected ? (
