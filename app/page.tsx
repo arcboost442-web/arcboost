@@ -133,10 +133,11 @@ export default function Home() {
               <span style={{ fontWeight: 700, fontSize: "16px", letterSpacing: "-.3px", background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ArcBoost</span>
             </div>
             {/* NAV LINKS */}
-            <div style={{ display: "flex", gap: "4px" }}>
-              {["Markets", "Launch", "Portfolio"].map((l, i) => (
-                <button key={l} style={{ padding: "6px 14px", borderRadius: "7px", fontSize: "13px", color: i === 0 ? TEXT : SUB, cursor: "pointer", border: "none", background: i === 0 ? CARD2 : "none", fontFamily: "inherit", fontWeight: i === 0 ? 500 : 400 }}>{l}</button>
-              ))}
+            {[{label:"Markets",href:"/"},{label:"Launch",href:"/create"},{label:"Portfolio",href:"/portfolio"}].map((l,i) => (
+  <Link key={l.label} href={l.href} style={{textDecoration:"none"}}>
+    <button style={{...}}>{l.label}</button>
+  </Link>
+))}
             </div>
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
