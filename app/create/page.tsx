@@ -41,16 +41,16 @@ export default function CreateToken() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [logoPreview, setLogoPreview] = useState("");
   const [focusField, setFocusField] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
-    name: "", symbol: "", description: "", imageURI: "",
-    twitter: "", telegram: "", website: "",
-  });
+  name: "", symbol: "", description: "", imageURI: "",
+  twitter: "", telegram: "", website: "",
+});
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -59,14 +59,42 @@ export default function CreateToken() {
     setError("");
   };
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 7 * 1024 * 1024) return setError("File too large. Max 7MB.");
-    const reader = new FileReader();
-    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
-  };
+  const [uploading, setUploading] = useState(false);
+
+const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (file.size > 7 * 1024 * 1024) return setError("File too large. Max 7MB.");
+
+  // Preview lokal dulu
+  const reader = new FileReader();
+  reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+  reader.readAsDataURL(file);
+
+  // Upload ke Pinata
+  try {
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (data.url) {
+      setLogoPreview(data.url); // ganti preview ke IPFS URL
+      setForm(prev => ({ ...prev, imageURI: data.url }));
+    } else {
+      setError("Upload gagal. Coba lagi.");
+    }
+  } catch {
+    setError("Upload gagal. Coba lagi.");
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleLaunch = async () => {
     if (!isConnected) return setError("Connect wallet first.");
@@ -138,6 +166,33 @@ export default function CreateToken() {
           <div style={{ fontSize: "13px", color: SUB }}>Your token will be immediately tradeable on Arc after deployment.</div>
         </div>
 
+        {/* STEPS */}
+        <div style={{ display: "flex", alignItems: "center", marginBottom: "28px" }}>
+          {[
+            { n: "1", label: "Token identity", state: "done" },
+            { n: "2", label: "Social & details", state: "active" },
+            { n: "3", label: "Review & deploy", state: "idle" },
+          ].map((s, i) => (
+            <div key={s.label} style={{ display: "flex", alignItems: "center", flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{
+                  width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "11px", fontWeight: 700, flexShrink: 0,
+                  background: s.state === "done" ? GRAD : s.state === "active" ? BLUE_DIM : "#161616",
+                  color: s.state === "done" ? "#fff" : s.state === "active" ? BLUE_LT : DIM,
+                  border: s.state === "idle" ? `1px solid ${BORDER2}` : "none",
+                }}>
+                  {s.state === "done" ? (
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  ) : s.n}
+                </div>
+                <span style={{ fontSize: "12px", fontWeight: 500, color: s.state === "idle" ? DIM : s.state === "done" ? BLUE_LT : TEXT, whiteSpace: "nowrap" }}>{s.label}</span>
+              </div>
+              {i < 2 && <div style={{ flex: 1, height: "1px", background: BORDER, margin: "0 10px" }} />}
+            </div>
+          ))}
+        </div>
+
         {/* LAYOUT */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 272px", gap: "16px", alignItems: "start" }}>
 
@@ -156,23 +211,28 @@ export default function CreateToken() {
                   <div style={{ fontSize: "11px", fontWeight: 500, color: SUB, marginBottom: "6px", display: "flex", alignItems: "center", gap: "4px" }}>
                     Logo <span style={{ color: BLUE_LT }}>*</span>
                   </div>
-                  <div onClick={() => fileRef.current?.click()}
-                    style={{ border: `1.5px dashed ${logoPreview ? BLUE_B : BORDER2}`, borderRadius: "12px", background: "#050A14", cursor: "pointer", overflow: "hidden", transition: "border-color .15s" }}
-                    onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = BLUE_B}
-                    onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = logoPreview ? BLUE_B : BORDER2}>
-                    {logoPreview ? (
-                      <img src={logoPreview} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", display: "block", borderRadius: "10px" }} />
-                    ) : (
-                      <div style={{ padding: "16px", textAlign: "center" }}>
-                        <div style={{ width: "40px", height: "40px", background: BLUE_DIM, border: `1px solid ${BLUE_B}`, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={BLUE_LT} strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                        </div>
-                        <div style={{ fontSize: "10px", color: DIM, lineHeight: "1.5", marginBottom: "8px" }}>JPG, PNG, GIF<br/>Max 7MB</div>
-                        <div style={{ background: BLUE_DIM, color: BLUE_LT, border: `1px solid ${BLUE_B}`, borderRadius: "6px", padding: "5px 10px", fontSize: "11px", fontWeight: 500, display: "inline-block" }}>Choose file</div>
-                      </div>
-                    )}
-                    <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
-                  </div>
+                  <div onClick={() => !uploading && fileRef.current?.click()}
+  style={{ border: `1.5px dashed ${logoPreview ? BLUE_B : BORDER2}`, borderRadius: "12px", background: "#050A14", cursor: uploading ? "wait" : "pointer", overflow: "hidden", transition: "border-color .15s" }}
+  onMouseEnter={e => !uploading && ((e.currentTarget as HTMLDivElement).style.borderColor = BLUE_B)}
+  onMouseLeave={e => !uploading && ((e.currentTarget as HTMLDivElement).style.borderColor = logoPreview ? BLUE_B : BORDER2)}>
+  {uploading ? (
+    <div style={{ padding: "24px 16px", textAlign: "center" }}>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={BLUE_LT} strokeWidth="2" style={{ animation: "spin 1s linear infinite", margin: "0 auto 8px", display: "block" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      <div style={{ fontSize: "10px", color: SUB }}>Uploading to IPFS...</div>
+    </div>
+  ) : logoPreview ? (
+    <img src={logoPreview} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", display: "block", borderRadius: "10px" }} />
+  ) : (
+    <div style={{ padding: "16px", textAlign: "center" }}>
+      <div style={{ width: "40px", height: "40px", background: BLUE_DIM, border: `1px solid ${BLUE_B}`, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={BLUE_LT} strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </div>
+      <div style={{ fontSize: "10px", color: DIM, lineHeight: "1.5", marginBottom: "8px" }}>JPG, PNG, GIF<br/>Max 7MB</div>
+      <div style={{ background: BLUE_DIM, color: BLUE_LT, border: `1px solid ${BLUE_B}`, borderRadius: "6px", padding: "5px 10px", fontSize: "11px", fontWeight: 500, display: "inline-block" }}>Choose file</div>
+    </div>
+  )}
+  <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
+</div>
                 </div>
 
                 {/* Symbol + Name */}
