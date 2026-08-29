@@ -135,7 +135,7 @@ export default function Home() {
             {/* NAV LINKS */}
             {[{label:"Markets",href:"/"},{label:"Launch",href:"/create"},{label:"Portfolio",href:"/portfolio"}].map((l,i) => (
   <Link key={l.label} href={l.href} style={{textDecoration:"none"}}>
-    <button style={{...}}>{l.label}</button>
+    <button style={{ padding: "6px 14px", borderRadius: "7px", fontSize: "13px", color: i === 0 ? TEXT : SUB, cursor: "pointer", border: "none", background: i === 0 ? CARD2 : "none", fontFamily: "inherit", fontWeight: i === 0 ? 500 : 400 }}>{l.label}</button>
   </Link>
 ))}
             </div>
