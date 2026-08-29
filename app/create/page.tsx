@@ -59,7 +59,6 @@ export default function CreateToken() {
     setError("");
   };
 
-  const [uploading, setUploading] = useState(false);
 
 const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
@@ -101,7 +100,7 @@ const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!form.name.trim()) return setError("Token name is required.");
     if (!form.symbol.trim()) return setError("Ticker symbol is required.");
     try {
-      setLoading(true); setError(""); setSuccess("");
+      setUploading(true); setError(""); setSuccess("");
       await new Promise(r => setTimeout(r, 800));
       const { createWalletClient, custom } = await import("viem");
       const walletClient = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
@@ -114,7 +113,7 @@ const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
       setTimeout(() => router.push("/"), 2500);
     } catch (err: any) {
       setError(err.message?.slice(0, 140) || "An error occurred.");
-    } finally { setLoading(false); }
+    } finally { setUploading(false); }
   };
 
   const inputStyle = (name: string): React.CSSProperties => ({
@@ -318,9 +317,9 @@ const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                   Back
                 </button>
-                <button onClick={handleLaunch} disabled={loading}
-                  style={{ height: "38px", background: loading ? BORDER2 : GRAD, color: loading ? DIM : "#fff", border: "none", borderRadius: "8px", padding: "0 24px", fontSize: "13px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "8px", fontFamily: "inherit", minWidth: "140px", justifyContent: "center", boxShadow: loading ? "none" : "0 4px 20px rgba(37,99,235,0.35)", transition: "all .15s" }}>
-                  {loading ? (
+                <button onClick={handleLaunch} disabled={uploading}
+                  style={{ height: "38px", background: uploading ? BORDER2 : GRAD, color: uploading ? DIM : "#fff", border: "none", borderRadius: "8px", padding: "0 24px", fontSize: "13px", fontWeight: 700, cursor: uploading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "8px", fontFamily: "inherit", minWidth: "140px", justifyContent: "center", boxShadow: uploading ? "none" : "0 4px 20px rgba(37,99,235,0.35)", transition: "all .15s" }}>
+                  {uploading ? (
                     <>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                       Deploying...
@@ -414,6 +413,7 @@ const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
       </div>
 
       <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}*{box-sizing:border-box;}input::placeholder,textarea::placeholder{color:#2A3A5C;}`}</style>
+      </div>
     </main>
   );
 }
