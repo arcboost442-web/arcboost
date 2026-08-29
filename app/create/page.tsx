@@ -138,7 +138,32 @@ export default function CreateToken() {
           <div style={{ fontSize: "13px", color: SUB }}>Your token will be immediately tradeable on Arc after deployment.</div>
         </div>
 
-  
+        {/* STEPS */}
+        <div style={{ display: "flex", alignItems: "center", marginBottom: "28px" }}>
+          {[
+            { n: "1", label: "Token identity", state: "done" },
+            { n: "2", label: "Social & details", state: "active" },
+            { n: "3", label: "Review & deploy", state: "idle" },
+          ].map((s, i) => (
+            <div key={s.label} style={{ display: "flex", alignItems: "center", flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{
+                  width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "11px", fontWeight: 700, flexShrink: 0,
+                  background: s.state === "done" ? GRAD : s.state === "active" ? BLUE_DIM : "#161616",
+                  color: s.state === "done" ? "#fff" : s.state === "active" ? BLUE_LT : DIM,
+                  border: s.state === "idle" ? `1px solid ${BORDER2}` : "none",
+                }}>
+                  {s.state === "done" ? (
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  ) : s.n}
+                </div>
+                <span style={{ fontSize: "12px", fontWeight: 500, color: s.state === "idle" ? DIM : s.state === "done" ? BLUE_LT : TEXT, whiteSpace: "nowrap" }}>{s.label}</span>
+              </div>
+              {i < 2 && <div style={{ flex: 1, height: "1px", background: BORDER, margin: "0 10px" }} />}
+            </div>
+          ))}
+        </div>
 
         {/* LAYOUT */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 272px", gap: "16px", alignItems: "start" }}>
@@ -346,7 +371,7 @@ export default function CreateToken() {
             <div style={{ background: "#100D00", border: "1px solid rgba(251,191,36,0.15)", borderRadius: "14px", padding: "14px", display: "flex", gap: "10px" }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" strokeWidth="1.8" style={{ flexShrink: 0, marginTop: "1px" }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               <div style={{ fontSize: "11px", color: "#92400E", lineHeight: "1.6" }}>
-                <strong style={{ color: "#FBBF24", display: "block", marginBottom: "2px", fontWeight: 600 }}>Warning</strong>
+                <strong style={{ color: "#FBBF24", display: "block", marginBottom: "2px", fontWeight: 600 }}></strong>
                 Deployed tokens cannot be deleted. Double-check all information before clicking deploy.
               </div>
             </div>
