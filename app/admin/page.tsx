@@ -19,7 +19,7 @@ const publicClient = createPublicClient({
   transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
 });
 
-const FACTORY_ADDRESS = "0x47E2216DB1F312dfeAD33B08777FbA11b41d9316" as const;
+const FACTORY_ADDRESS = "0x8d0EfD38DBc0D6Ee237fd3a1a37Ecdc03446915A" as const;
 const OWNER_ADDRESS   = "0xF113960dDaBA8F45014Ef43177b1DC27f1f4E78a" as `0x${string}`;
 
 const FACTORY_ABI = [
@@ -265,7 +265,7 @@ const handleSetGradTarget = () => execTx(async () => {
         </div>
 
         {/* SETTINGS */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", marginBottom: "16px" }}>
 
           {/* GANTI TREASURY */}
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "18px 20px" }}>
