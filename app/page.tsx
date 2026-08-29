@@ -61,6 +61,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("All");
+const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di sini
 
   useEffect(() => { setMounted(true); loadTokens(); }, []);
 
@@ -116,7 +117,64 @@ export default function Home() {
 
   return (
     <main style={{ minHeight: "100vh", background: BG, color: TEXT, fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif" }}>
+{/* HOW IT WORKS MODAL */}
+{showHowItWorks && (
+  <div onClick={() => setShowHowItWorks(false)}
+    style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+    <div onClick={e => e.stopPropagation()}
+      style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "32px", maxWidth: "520px", width: "100%", position: "relative" }}>
 
+      {/* CLOSE */}
+      <button onClick={() => setShowHowItWorks(false)}
+        style={{ position: "absolute", top: "16px", right: "16px", background: CARD2, border: `1px solid ${BORDER2}`, borderRadius: "7px", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: DIM }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+
+      {/* TITLE */}
+      <div style={{ fontSize: "20px", fontWeight: 700, color: TEXT, letterSpacing: "-.4px", marginBottom: "6px" }}>How ArcBoost works</div>
+      <div style={{ fontSize: "13px", color: SUB, marginBottom: "28px" }}>Launch and trade tokens on Arc in three simple steps.</div>
+
+      {/* STEPS */}
+      {[
+        {
+          n: "1",
+          title: "Create a token",
+          desc: "Fill in your token name, symbol, and image. Pay a small deploy fee (0.001 USDC) and your token is live on Arc instantly — no code required.",
+          icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>,
+        },
+        {
+          n: "2",
+          title: "Trade on bonding curve",
+          desc: "Anyone can buy or sell the token immediately. Price increases automatically as more people buy — early buyers get the best price.",
+          icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+        },
+        {
+          n: "3",
+          title: "Graduate to DEX",
+          desc: "When the bonding curve reaches 100%, the token automatically graduates. Liquidity moves to a DEX and trading continues there.",
+          icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>,
+        },
+      ].map((step, i) => (
+        <div key={i} style={{ display: "flex", gap: "16px", marginBottom: i < 2 ? "20px" : "28px" }}>
+          <div style={{ width: "40px", height: "40px", borderRadius: "11px", background: BLUE_DIM, border: `1px solid ${BLUE_B}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: BLUE_LT }}>
+            {step.icon}
+          </div>
+          <div>
+            <div style={{ fontSize: "14px", fontWeight: 600, color: TEXT, marginBottom: "4px" }}>{step.title}</div>
+            <div style={{ fontSize: "13px", color: SUB, lineHeight: "1.65" }}>{step.desc}</div>
+          </div>
+        </div>
+      ))}
+
+      {/* CTA */}
+      <Link href="/create" onClick={() => setShowHowItWorks(false)}>
+        <button style={{ width: "100%", background: GRAD, color: "#fff", border: "none", borderRadius: "10px", padding: "13px", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 20px rgba(37,99,235,0.3)" }}>
+          Launch a Token
+        </button>
+      </Link>
+    </div>
+  </div>
+)}
       {/* AMBIENT GLOW */}
       <div style={{ position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "800px", height: "400px", background: "radial-gradient(ellipse at 50% 0%, rgba(37,99,235,0.12) 0%, transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
 
@@ -186,9 +244,9 @@ export default function Home() {
                 Launch a Token
               </button>
             </Link>
-            <button style={{ background: CARD, color: TEXT, border: `1px solid ${BORDER2}`, borderRadius: "10px", padding: "13px 28px", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>
-              How it works
-            </button>
+            <button onClick={() => setShowHowItWorks(true)} style={{ background: CARD, color: TEXT, border: `1px solid ${BORDER2}`, borderRadius: "10px", padding: "13px 28px", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>
+  How it works
+</button>
           </div>
         </div>
 
