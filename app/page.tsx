@@ -302,55 +302,102 @@ export default function Home() {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "32px" }}>
               {filtered.map((token) => {
-                const pct = Math.min((token.ethCollected / 1) * 100, 100);
-                const badge = getBadge(token);
-                const isTop = token.tokenAddress === topToken?.tokenAddress;
-                return (
-                  <div key={token.tokenAddress}
-                    onClick={() => window.location.href = `/token/${token.tokenAddress}`}
-                    style={{ background: isTop ? `linear-gradient(135deg, ${BLUE_DIM}, #0A1625)` : CARD, border: `1px solid ${isTop ? BLUE_B : BORDER}`, borderRadius: "14px", padding: "18px", cursor: "pointer", transition: "all .2s", position: "relative", overflow: "hidden" }}
-                    onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.border = `1px solid ${BLUE_B}`; el.style.transform = "translateY(-2px)"; el.style.boxShadow = "0 12px 40px rgba(37,99,235,0.12)"; }}
-                    onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.border = `1px solid ${isTop ? BLUE_B : BORDER}`; el.style.transform = "translateY(0)"; el.style.boxShadow = "none"; }}
-                  >
-                    <div style={{ position: "absolute", top: 0, right: 0, width: "80px", height: "80px", background: "radial-gradient(circle at 100% 0%, rgba(37,99,235,0.06) 0%, transparent 70%)" }} />
+  const pct = Math.min((token.ethCollected / 1) * 100, 100);
+  const badge = getBadge(token);
+  const isTop = token.tokenAddress === topToken?.tokenAddress;
+  const isGrad = token.graduated;
+  return (
+    <div key={token.tokenAddress}
+      onClick={() => window.location.href = `/token/${token.tokenAddress}`}
+      style={{
+        background: isGrad
+          ? "linear-gradient(135deg, #0A1A0E 0%, #0A1625 100%)"
+          : isTop ? `linear-gradient(135deg, ${BLUE_DIM}, #0A1625)` : CARD,
+        border: `1px solid ${isGrad ? "rgba(52,211,153,0.3)" : isTop ? BLUE_B : BORDER}`,
+        borderRadius: "14px", padding: "18px", cursor: "pointer",
+        transition: "all .2s", position: "relative", overflow: "hidden",
+        boxShadow: isGrad ? "0 0 24px rgba(52,211,153,0.06)" : "none",
+      }}
+      onMouseEnter={e => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.border = `1px solid ${isGrad ? "rgba(52,211,153,0.5)" : BLUE_B}`;
+        el.style.transform = "translateY(-2px)";
+        el.style.boxShadow = isGrad ? "0 12px 40px rgba(52,211,153,0.1)" : "0 12px 40px rgba(37,99,235,0.12)";
+      }}
+      onMouseLeave={e => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.border = `1px solid ${isGrad ? "rgba(52,211,153,0.3)" : isTop ? BLUE_B : BORDER}`;
+        el.style.transform = "translateY(0)";
+        el.style.boxShadow = isGrad ? "0 0 24px rgba(52,211,153,0.06)" : "none";
+      }}
+    >
+      {/* GLOW */}
+      <div style={{ position: "absolute", top: 0, right: 0, width: "80px", height: "80px",
+        background: isGrad
+          ? "radial-gradient(circle at 100% 0%, rgba(52,211,153,0.08) 0%, transparent 70%)"
+          : "radial-gradient(circle at 100% 0%, rgba(37,99,235,0.06) 0%, transparent 70%)" }} />
 
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "14px" }}>
-                      <div style={{ width: "44px", height: "44px", borderRadius: "11px", background: BLUE_DIM, border: `1px solid ${BORDER2}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
-                        {token.imageURI ? <img src={token.imageURI} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontWeight: 700, fontSize: "16px", color: BLUE_LT }}>{token.symbol?.slice(0, 1)}</span>}
-                      </div>
-                      <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", padding: "3px 8px", borderRadius: "4px", background: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}>
-                        {badge.label}
-                      </span>
-                    </div>
+      {/* GRADUATED RIBBON */}
+      {isGrad && (
+        <div style={{ position: "absolute", top: "12px", right: "-22px", background: "linear-gradient(90deg, #065F46, #047857)", color: "#34D399", fontSize: "9px", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", padding: "3px 28px", transform: "rotate(35deg)", boxShadow: "0 2px 8px rgba(52,211,153,0.2)" }}>
+          Graduated
+        </div>
+      )}
 
-                    <div style={{ fontSize: "15px", fontWeight: 700, color: TEXT, marginBottom: "2px", letterSpacing: "-.2px" }}>{token.name}</div>
-                    <div style={{ fontSize: "12px", fontWeight: 600, color: BLUE_LT, marginBottom: "6px" }}>{token.symbol}</div>
-                    <div style={{ fontSize: "12px", color: SUB, lineHeight: "1.5", marginBottom: "14px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {token.description || "No description"}
-                    </div>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "14px" }}>
+        <div style={{ width: "44px", height: "44px", borderRadius: "11px",
+          background: isGrad ? "#0A2018" : BLUE_DIM,
+          border: `1px solid ${isGrad ? "rgba(52,211,153,0.2)" : BORDER2}`,
+          display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0,
+          boxShadow: isGrad ? "0 0 12px rgba(52,211,153,0.1)" : "none" }}>
+          {token.imageURI
+            ? <img src={token.imageURI} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <span style={{ fontWeight: 700, fontSize: "16px", color: isGrad ? "#34D399" : BLUE_LT }}>{token.symbol?.slice(0, 1)}</span>
+          }
+        </div>
+        {!isGrad && (
+          <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", padding: "3px 8px", borderRadius: "4px", background: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}>
+            {badge.label}
+          </span>
+        )}
+      </div>
 
-                    <div style={{ marginBottom: "12px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: DIM, marginBottom: "5px" }}>
-                        <span style={{ textTransform: "uppercase", letterSpacing: ".05em" }}>Bonding Curve</span>
-                        <span style={{ color: pct >= 80 ? CYAN : BLUE_LT, fontWeight: 600 }}>{token.graduated ? "Graduated" : `${pct.toFixed(1)}%`}</span>
-                      </div>
-                      <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: "4px", height: "4px", overflow: "hidden" }}>
-                        <div style={{ height: "4px", borderRadius: "4px", background: pct >= 80 ? `linear-gradient(90deg, ${BLUE_LT}, ${CYAN})` : BLUE_LT, width: `${pct}%`, transition: "width .4s" }} />
-                      </div>
-                    </div>
+      <div style={{ fontSize: "15px", fontWeight: 700, color: TEXT, marginBottom: "2px", letterSpacing: "-.2px" }}>{token.name}</div>
+      <div style={{ fontSize: "12px", fontWeight: 600, color: isGrad ? "#34D399" : BLUE_LT, marginBottom: "6px" }}>{token.symbol}</div>
+      <div style={{ fontSize: "12px", color: SUB, lineHeight: "1.5", marginBottom: "14px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {token.description || "No description"}
+      </div>
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ fontSize: "11px", color: DIM }}>
-                        Vol: <span style={{ color: SUB }}>{token.ethCollected.toFixed(4)} USDC</span>
-                      </div>
-                      <div style={{ fontSize: "11px", fontWeight: 600, color: BLUE_LT, display: "flex", alignItems: "center", gap: "4px" }}>
-                        Trade
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+      <div style={{ marginBottom: "12px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: DIM, marginBottom: "5px" }}>
+          <span style={{ textTransform: "uppercase", letterSpacing: ".05em" }}>Bonding Curve</span>
+          <span style={{ color: isGrad ? "#34D399" : pct >= 80 ? CYAN : BLUE_LT, fontWeight: 600 }}>
+            {isGrad ? "100% — Graduated" : `${pct.toFixed(1)}%`}
+          </span>
+        </div>
+        <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: "4px", height: "4px", overflow: "hidden" }}>
+          <div style={{ height: "4px", borderRadius: "4px",
+            background: isGrad
+              ? "linear-gradient(90deg, #34D399, #06B6D4)"
+              : pct >= 80 ? `linear-gradient(90deg, ${BLUE_LT}, ${CYAN})` : BLUE_LT,
+            width: isGrad ? "100%" : `${pct}%`,
+            transition: "width .4s",
+            boxShadow: isGrad ? "0 0 8px rgba(52,211,153,0.4)" : "none" }} />
+        </div>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: "11px", color: DIM }}>
+          Vol: <span style={{ color: isGrad ? "#34D399" : SUB }}>{token.ethCollected.toFixed(4)} USDC</span>
+        </div>
+        <div style={{ fontSize: "11px", fontWeight: 600, color: isGrad ? "#34D399" : BLUE_LT, display: "flex", alignItems: "center", gap: "4px" }}>
+          {isGrad ? "View on DEX" : "Trade"}
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+      </div>
+    </div>
+  );
+})}
             </div>
           )}
 
