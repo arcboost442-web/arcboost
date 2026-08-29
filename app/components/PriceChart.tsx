@@ -48,7 +48,7 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
       crosshairMarkerBackgroundColor: "#0F1A35",
     });
 
-    lineSeries.setData(data);
+    lineSeries.setData(data.map(d => ({ time: d.time as any, value: d.value })));
     chart.timeScale().fitContent();
 
     const handleResize = () => {
