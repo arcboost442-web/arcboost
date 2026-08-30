@@ -193,6 +193,8 @@ export default function TokenPage() {
   const totSup= Number(formatEther(token.totalSupply));
   const pct   = Math.min((ethC/1)*100,100);
   const price = totSup>0?ethC/totSup:0;
+  const activeAmt  = bsMode==="buy"?buyAmt:sellAmt;
+  const amtInvalid = activeAmt===""||isNaN(Number(activeAmt))||Number(activeAmt)<=0;
 
   return (
     <main style={{background:BG,minHeight:"100vh",color:TEXT,fontFamily:"-apple-system,BlinkMacSystemFont,'Inter','SF Pro Display',sans-serif"}}>
@@ -400,22 +402,15 @@ export default function TokenPage() {
                   {bsMode==="buy"?"Amount (USDC)":`Amount (${token.symbol})`}
                 </div>
                 <div style={{background:BG,border:`1px solid ${BORDER2}`,borderRadius:"8px",display:"flex",alignItems:"center",padding:"10px 13px",marginBottom:"10px"}}>
-                  <input type="number" value={bsMode==="buy"?buyAmt:sellAmt}
-                    onChange={e=>bsMode==="buy"?setBuyAmt(e.target.value):setSellAmt(e.target.value)}
+                  <input type="number" min="0" step="any" value={bsMode==="buy"?buyAmt:sellAmt}
+                    onChange={e=>{
+                      const v = e.target.value;
+                      if (v.includes("-")) return;
+                      bsMode==="buy"?setBuyAmt(v):setSellAmt(v);
+                    }}
                     style={{flex:1,background:"none",border:"none",color:TEXT,fontSize:"18px",fontWeight:700,outline:"none",fontFamily:"inherit",width:"100%"}}/>
                   <span style={{color:SUB,fontSize:"12px",fontWeight:500}}>{bsMode==="buy"?"USDC":token.symbol}</span>
                 </div>
-
-                {bsMode==="buy"&&(
-                  <div style={{display:"flex",gap:"6px",marginBottom:"12px"}}>
-                    {["0.01","0.1","0.5","1.0"].map(p=>(
-                      <button key={p} onClick={()=>setBuyAmt(p)}
-                        style={{flex:1,background:buyAmt===p?BLUE_DIM:BG,border:`1px solid ${buyAmt===p?BLUE_B:BORDER2}`,borderRadius:"6px",padding:"6px 0",fontSize:"11px",color:buyAmt===p?BLUE_LT:DIM,cursor:"pointer",fontFamily:"inherit",fontWeight:buyAmt===p?600:400,transition:"all .15s"}}>
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                )}
 
                 <div style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:"8px",padding:"12px",marginBottom:"12px"}}>
                   {[
@@ -434,7 +429,7 @@ export default function TokenPage() {
                 {error&&<div style={{background:RED_DIM,border:"1px solid rgba(239,68,68,0.15)",borderRadius:"7px",padding:"10px 12px",color:RED,fontSize:"12px",marginBottom:"10px",lineHeight:"1.5"}}>{error}</div>}
                 {success&&<div style={{background:BLUE_DIM,border:`1px solid ${BLUE_B}`,borderRadius:"7px",padding:"10px 12px",color:CYAN,fontSize:"12px",marginBottom:"10px"}}>{success}</div>}
 
-                <button onClick={bsMode==="buy"?handleBuy:handleSell} disabled={txLoading||token.graduated}
+                <button onClick={bsMode==="buy"?handleBuy:handleSell} disabled={txLoading||token.graduated||amtInvalid}
                   style={{width:"100%",background:txLoading?BORDER2:bsMode==="buy"?GRAD:"linear-gradient(135deg,#EF4444,#DC2626)",
                     color:txLoading?DIM:"#fff",border:"none",borderRadius:"9px",padding:"14px",fontSize:"14px",fontWeight:700,
                     cursor:txLoading?"not-allowed":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",
