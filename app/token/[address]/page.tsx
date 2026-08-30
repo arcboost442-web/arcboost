@@ -454,7 +454,7 @@ export default function TokenPage() {
     {["1%","5%","10%","20%","49%"].map((s)=>(
       <button key={s} onClick={() => { setSlippage(s); }}
         style={{flex:1,padding:"7px 0",borderRadius:"7px",fontSize:"11px",fontWeight:600,cursor:"pointer",border:"none",fontFamily:"inherit",transition:"all .15s",
-          background:slippage===s?"#D97706":CARD2,
+          background:slippage===s?"#063ccf":CARD2,
           color:slippage===s?"#fff":SUB}}>
         {s}
       </button>
