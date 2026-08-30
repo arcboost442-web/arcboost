@@ -86,11 +86,7 @@ export default function TokenPage() {
   const [timeframe, setTimeframe] = useState("ALL");
   const [copied, setCopied]       = useState(false);
 
-  useEffect(() => {
-    loadToken();
-    setTimeout(() => loadChartData(), 1500);
-    setTimeout(() => loadTxs(), 3000);
-  }, []);
+  
 
   const loadToken = async () => {
     try {
@@ -108,6 +104,9 @@ export default function TokenPage() {
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "website" }),
       ]);
       setToken({name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website});
+      setToken({name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website});
+const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website};
+loadChartData(tokenData);
       if (address) {
         const bal = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [address] });
 setMyBal(formatEther(bal));      }
@@ -115,47 +114,24 @@ setMyBal(formatEther(bal));      }
     finally{ setLoading(false); }
   };
 
-  const loadChartData = async () => {
+  const loadChartData = async (tokenData?: any) => {
   try {
-    const latest = await publicClient.getBlockNumber();
-    const from = latest > BigInt(100000) ? latest - BigInt(100000) : BigInt(0);
-    
-    const logs = await publicClient.getLogs({
-      address: tokenAddress,
-      event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},
-      fromBlock: from,
-      toBlock: latest
-    });
-
-    if (logs.length === 0) {
-      // Tidak ada logs — buat chart flat dari data saat ini
-      const now = Math.floor(Date.now() / 1000);
-      const ethC = Number(formatEther(token.ethCollected));
-      const totSup = Number(formatEther(token.totalSupply));
-      const price = totSup > 0 ? ethC / totSup : 0;
-      setChart([
-        { time: now - 3600, value: 0 },
-        { time: now, value: price },
-      ]);
-      return;
-    }
-
+    const t = tokenData || token;
+    if (!t) return;
+    const ethC = Number(formatEther(t.ethCollected));
+    const totSup = Number(formatEther(t.totalSupply));
+    const now = Math.floor(Date.now() / 1000);
+    const points = 20;
     const pts: {time: number; value: number}[] = [];
-    let cumSupply = 0;
-    let cumEth = 0;
-
-    for (const l of logs) {
-      const ethIn = Number(formatEther(l.args.ethIn || BigInt(0)));
-      const tokens = Number(formatEther(l.args.tokensOut || BigInt(0)));
-      cumSupply += tokens;
-      cumEth += ethIn;
-      const price = cumSupply > 0 ? cumEth / cumSupply : 0;
-      const blk = await publicClient.getBlock({ blockNumber: l.blockNumber });
-      pts.push({ time: Number(blk.timestamp), value: price });
+    for (let i = 0; i <= points; i++) {
+      const fraction = i / points;
+      const supplyAtPoint = totSup * fraction;
+      const ethAtPoint = ethC * fraction;
+      const price = supplyAtPoint > 0 ? ethAtPoint / supplyAtPoint : 0;
+      const timeAtPoint = now - (points - i) * 300;
+      pts.push({ time: timeAtPoint, value: price });
     }
-
-    const unique = pts.filter((p, i, a) => a.findIndex(x => x.time === p.time) === i);
-    if (unique.length > 0) setChart(unique);
+    setChart(pts);
   } catch(e) { console.error(e); }
 };
 
@@ -187,10 +163,11 @@ const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);
   };
 
   const handleBuy = () => exec(async () => {
-    const {createWalletClient,custom} = await import("viem");
-    const wc = createWalletClient({chain:arcTestnet, transport:custom(window.ethereum)});
-await wc.writeContract({address:tokenAddress, abi:TOKEN_ABI, functionName:"sell", args:[parseEther(sellAmt)], account:address!});    setSuccess(`Order filled — ${buyAmt} USDC spent.`);
-  });
+  const {createWalletClient, custom} = await import("viem");
+  const wc = createWalletClient({chain: arcTestnet, transport: custom(window.ethereum)});
+  await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "buy", value: parseEther(buyAmt), account: address!});
+  setSuccess(`Order filled — ${buyAmt} USDC spent.`);
+});
 
   const handleSell = () => exec(async () => {
     const {createWalletClient,custom} = await import("viem");
