@@ -129,18 +129,27 @@ useEffect(() => {
     if (!t) return;
     const ethC = Number(formatEther(t.ethCollected));
     const totSup = Number(formatEther(t.totalSupply));
+    if (ethC === 0 || totSup === 0) return; // jangan tampilkan chart kalau belum ada transaksi
+    const currentPrice = ethC / totSup;
     const now = Math.floor(Date.now() / 1000);
-    const points = 20;
+    const points = 30;
     const pts: {time: number; value: number}[] = [];
+
     for (let i = 0; i <= points; i++) {
       const fraction = i / points;
+      // Bonding curve: harga naik seiring supply bertambah
       const supplyAtPoint = totSup * fraction;
       const ethAtPoint = ethC * fraction;
       const price = supplyAtPoint > 0 ? ethAtPoint / supplyAtPoint : 0;
-      const timeAtPoint = now - (points - i) * 300;
-      pts.push({ time: timeAtPoint, value: price });
+      if (price > 0) {
+        const timeAtPoint = now - (points - i) * 180;
+        pts.push({ time: timeAtPoint, value: price });
+      }
     }
-    setChart(pts);
+
+    // Pastikan semua value sama (flat line) kalau harga tidak berubah
+    const uniquePts = pts.filter((p, i, a) => a.findIndex(x => x.time === p.time) === i);
+    if (uniquePts.length > 0) setChart(uniquePts);
   } catch(e) { console.error(e); }
 };
 
