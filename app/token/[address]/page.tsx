@@ -118,8 +118,7 @@ setMyBal(formatEther(bal));      }
   const loadChartData = async () => {
   try {
     const latest = await publicClient.getBlockNumber();
-    const from = latest > BigInt(1000) ? latest - BigInt(1000) : BigInt(0);
-    const logs = await publicClient.getLogs({
+const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);    const logs = await publicClient.getLogs({
       address: tokenAddress,
       event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},
       fromBlock:from, toBlock:latest
@@ -151,7 +150,7 @@ const tokens = Number(formatEther(l.args.tokensOut||BigInt(0)));
   const loadTxs = async () => {
     try {
       const latest = await publicClient.getBlockNumber();
-      const from = latest > BigInt(1000) ? latest - BigInt(1000) : BigInt(0);
+const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);
       const [bl,sl] = await Promise.all([
         publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
         publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
