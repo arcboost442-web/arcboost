@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { createPublicClient, http, parseEther, formatEther, defineChain } from "viem";
+import { createPublicClient, http, parseEther, parseUnits, formatEther, formatUnits, defineChain } from "viem";
 import { useAccount } from "wagmi";
 import dynamic from "next/dynamic";
 
@@ -111,7 +111,7 @@ export default function TokenPage() {
       setToken({name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website});
       if (address) {
         const bal = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [address] });
-        setMyBal(formatEther(bal));
+setMyBal(formatUnits(bal, 6));
       }
     } catch(e){ console.error(e); }
     finally{ setLoading(false); }
@@ -126,8 +126,8 @@ export default function TokenPage() {
         fromBlock:from, toBlock:latest });
       const pts:{time:number;value:number}[]=[]; let cumE=0,cumT=0;
       for(const l of logs){
-        const e=Number(formatEther(l.args.ethIn||BigInt(0)));
-        const t=Number(formatEther(l.args.tokensOut||BigInt(0)));
+        const e=Number(formatUnits(l.args.ethIn||BigInt(0), 6));
+const t=Number(formatUnits(l.args.tokensOut||BigInt(0), 6));
         cumE+=e; cumT+=t;
         const price=cumT>0?cumE/cumT:0;
         const blk=await publicClient.getBlock({blockNumber:l.blockNumber});
@@ -146,8 +146,8 @@ export default function TokenPage() {
         publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
       ]);
       setTxs([
-        ...bl.map(l=>({type:"BUY" as const, amount:Number(formatEther(l.args.ethIn||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensOut||BigInt(0))).toFixed(0), addr:`${l.args.buyer?.slice(0,6)}...${l.args.buyer?.slice(-4)}`})),
-        ...sl.map(l=>({type:"SELL" as const, amount:Number(formatEther(l.args.ethOut||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensIn||BigInt(0))).toFixed(0), addr:`${l.args.seller?.slice(0,6)}...${l.args.seller?.slice(-4)}`})),
+        ...bl.map(l=>({type:"BUY" as const, amount:Number(formatUnits(l.args.ethIn||BigInt(0), 6)).toFixed(4), tokens:Number(formatUnits(l.args.tokensOut||BigInt(0), 6)).toFixed(0), addr:`${l.args.buyer?.slice(0,6)}...${l.args.buyer?.slice(-4)}`})),
+...sl.map(l=>({type:"SELL" as const, amount:Number(formatUnits(l.args.ethOut||BigInt(0), 6)).toFixed(4), tokens:Number(formatUnits(l.args.tokensIn||BigInt(0), 6)).toFixed(0), addr:`${l.args.seller?.slice(0,6)}...${l.args.seller?.slice(-4)}`})),
       ].reverse());
     } catch{}
   };
@@ -174,8 +174,7 @@ export default function TokenPage() {
   const handleSell = () => exec(async () => {
     const {createWalletClient,custom} = await import("viem");
     const wc = createWalletClient({chain:arcTestnet, transport:custom(window.ethereum)});
-    await wc.writeContract({address:tokenAddress, abi:TOKEN_ABI, functionName:"sell", args:[parseEther(sellAmt)], account:address!});
-    setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
+await wc.writeContract({address:tokenAddress, abi:TOKEN_ABI, functionName:"sell", args:[parseUnits(sellAmt, 6)], account:address!});    setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
   });
 
   if (loading) return (
@@ -189,8 +188,8 @@ export default function TokenPage() {
     </div>
   );
 
-  const ethC  = Number(formatEther(token.ethCollected));
-  const totSup= Number(formatEther(token.totalSupply));
+  const ethC  = Number(formatUnits(token.ethCollected, 6));
+const totSup= Number(formatUnits(token.totalSupply, 6));
   const pct   = Math.min((ethC/1)*100,100);
   const price = totSup>0?ethC/totSup:0;
   const activeAmt  = bsMode==="buy"?buyAmt:sellAmt;
