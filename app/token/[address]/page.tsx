@@ -448,17 +448,30 @@ export default function TokenPage() {
                   ):token.graduated?"Trade on DEX":bsMode==="buy"?`Buy ${token.symbol}`:`Sell ${token.symbol}`}
                 </button>
 
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"11px",color:DIM}}>
-                  <span>Slippage</span>
-                  <div style={{display:"flex",gap:"4px"}}>
-                    {["0.5%","1%","2%"].map((s)=>(
-                      <button key={s} onClick={() => setSlippage(s)}
-                        style={{background:slippage===s?BLUE_DIM:BG,border:`1px solid ${slippage===s?BLUE_B:BORDER2}`,borderRadius:"4px",padding:"3px 8px",fontSize:"10px",color:slippage===s?BLUE_LT:DIM,cursor:"pointer"}}>
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <div style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:"10px",padding:"12px",marginTop:"8px"}}>
+  <div style={{fontSize:"12px",fontWeight:600,color:TEXT,marginBottom:"10px"}}>Slippage Tolerance</div>
+  <div style={{display:"flex",gap:"6px",marginBottom:"10px"}}>
+    {["1%","5%","10%","20%","49%"].map((s)=>(
+      <button key={s} onClick={() => { setSlippage(s); }}
+        style={{flex:1,padding:"7px 0",borderRadius:"7px",fontSize:"11px",fontWeight:600,cursor:"pointer",border:"none",fontFamily:"inherit",transition:"all .15s",
+          background:slippage===s?"#D97706":CARD2,
+          color:slippage===s?"#fff":SUB}}>
+        {s}
+      </button>
+    ))}
+  </div>
+  <div style={{display:"flex",alignItems:"center",background:CARD2,border:`1px solid ${BORDER2}`,borderRadius:"7px",overflow:"hidden"}}>
+    <input
+      type="number"
+      value={slippage.replace("%","")}
+      onChange={e => setSlippage(e.target.value + "%")}
+      min="0.1" max="100" step="0.1"
+      style={{flex:1,background:"none",border:"none",color:TEXT,fontSize:"14px",padding:"8px 12px",outline:"none",fontFamily:"inherit"}}
+    />
+    <span style={{padding:"0 12px",color:SUB,fontSize:"13px",fontWeight:500}}>%</span>
+  </div>
+  <div style={{fontSize:"10px",color:DIM,marginTop:"7px"}}>Higher slippage = better chance of success, but worse price</div>
+</div>
               </div>
             </div>
 
