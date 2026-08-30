@@ -184,7 +184,7 @@ await wc.writeContract({address:tokenAddress, abi:TOKEN_ABI, functionName:"sell"
   const handleSell = () => exec(async () => {
     const {createWalletClient,custom} = await import("viem");
     const wc = createWalletClient({chain:arcTestnet, transport:custom(window.ethereum)});
-await wc.writeContract({address:tokenAddress, abi:TOKEN_ABI, functionName:"sell", args:[parseUnits(sellAmt, 6)], account:address!});    setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
+await wc.writeContract({address:tokenAddress, abi:TOKEN_ABI, functionName:"sell", args:[parseEther(sellAmt)], account:address!});    setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
   });
 
   if (loading) return (
