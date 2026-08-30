@@ -84,35 +84,44 @@ export default function TokenPage() {
   const [txs, setTxs]             = useState<TxItem[]>([]);
   const [slippage, setSlippage]   = useState("1%");
   const [timeframe, setTimeframe] = useState("ALL");
-  const [copied, setCopied]       = useState(false);
+const [copied, setCopied]       = useState(false);
+
+useEffect(() => {
+  const init = async () => {
+    const tokenData = await loadToken();
+    if (tokenData) loadChartData(tokenData);
+    loadTxs();
+  };
+  init();
+}, []);  
 
   
 
   const loadToken = async () => {
-    try {
-      const [name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website] = await Promise.all([
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "name" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "symbol" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "description" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "imageURI" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "creator" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "totalSupply" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "ethCollected" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "graduated" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "twitter" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "telegram" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "website" }),
-      ]);
-      setToken({name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website});
-      setToken({name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website});
-const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website};
-loadChartData(tokenData);
-      if (address) {
-        const bal = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [address] });
-setMyBal(formatEther(bal));      }
-    } catch(e){ console.error(e); }
-    finally{ setLoading(false); }
-  };
+  try {
+    const [name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website] = await Promise.all([
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "name" }),
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "symbol" }),
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "description" }),
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "imageURI" }),
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "creator" }),
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "totalSupply" }),
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "ethCollected" }),
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "graduated" }),
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "twitter" }),
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "telegram" }),
+      publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "website" }),
+    ]);
+    const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website};
+    setToken(tokenData);
+    if (address) {
+      const bal = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [address] });
+      setMyBal(formatEther(bal));
+    }
+    return tokenData;
+  } catch(e){ console.error(e); return null; }
+  finally{ setLoading(false); }
+};
 
   const loadChartData = async (tokenData?: any) => {
   try {
