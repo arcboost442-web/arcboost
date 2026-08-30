@@ -118,24 +118,38 @@ setMyBal(formatUnits(bal, 6));
   };
 
   const loadChartData = async () => {
-    try {
-      const latest = await publicClient.getBlockNumber();
-      const from = latest > BigInt(1000) ? latest - BigInt(1000) : BigInt(0);
-      const logs = await publicClient.getLogs({ address: tokenAddress,
-        event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},
-        fromBlock:from, toBlock:latest });
-      const pts:{time:number;value:number}[]=[]; let cumE=0,cumT=0;
-      for(const l of logs){
-        const e=Number(formatUnits(l.args.ethIn||BigInt(0), 6));
-const t=Number(formatUnits(l.args.tokensOut||BigInt(0), 6));
-        cumE+=e; cumT+=t;
-        const price=cumT>0?cumE/cumT:0;
-        const blk=await publicClient.getBlock({blockNumber:l.blockNumber});
-        pts.push({time:Number(blk.timestamp),value:price});
-      }
-      setChart(pts.filter((p,i,a)=>a.findIndex(x=>x.time===p.time)===i));
-    } catch{}
-  };
+  try {
+    const latest = await publicClient.getBlockNumber();
+    const from = latest > BigInt(1000) ? latest - BigInt(1000) : BigInt(0);
+    const logs = await publicClient.getLogs({
+      address: tokenAddress,
+      event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},
+      fromBlock:from, toBlock:latest
+    });
+
+    const pts:{time:number;value:number}[] = [];
+    let cumSupply = 0;
+    let cumEth = 0;
+
+    for(const l of logs){
+      const ethIn  = Number(formatUnits(l.args.ethIn||BigInt(0), 6));
+      const tokens = Number(formatUnits(l.args.tokensOut||BigInt(0), 6));
+
+      cumSupply += tokens;
+      cumEth    += ethIn;
+
+      // Harga = total eth terkumpul / total supply beredar
+      const price = cumSupply > 0 ? cumEth / cumSupply : 0;
+
+      const blk = await publicClient.getBlock({blockNumber: l.blockNumber});
+      pts.push({ time: Number(blk.timestamp), value: price });
+    }
+
+    // Deduplikasi timestamp
+    const unique = pts.filter((p,i,a) => a.findIndex(x => x.time === p.time) === i);
+    setChart(unique);
+  } catch(e){ console.error(e); }
+};
 
   const loadTxs = async () => {
     try {
