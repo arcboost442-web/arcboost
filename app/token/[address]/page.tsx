@@ -118,33 +118,45 @@ setMyBal(formatEther(bal));      }
   const loadChartData = async () => {
   try {
     const latest = await publicClient.getBlockNumber();
-const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);    const logs = await publicClient.getLogs({
+    const from = latest > BigInt(100000) ? latest - BigInt(100000) : BigInt(0);
+    
+    const logs = await publicClient.getLogs({
       address: tokenAddress,
       event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},
-      fromBlock:from, toBlock:latest
+      fromBlock: from,
+      toBlock: latest
     });
 
-    const pts:{time:number;value:number}[] = [];
+    if (logs.length === 0) {
+      // Tidak ada logs — buat chart flat dari data saat ini
+      const now = Math.floor(Date.now() / 1000);
+      const ethC = Number(formatEther(token.ethCollected));
+      const totSup = Number(formatEther(token.totalSupply));
+      const price = totSup > 0 ? ethC / totSup : 0;
+      setChart([
+        { time: now - 3600, value: 0 },
+        { time: now, value: price },
+      ]);
+      return;
+    }
+
+    const pts: {time: number; value: number}[] = [];
     let cumSupply = 0;
     let cumEth = 0;
 
-    for(const l of logs){
-      const ethIn  = Number(formatEther(l.args.ethIn||BigInt(0)));
-const tokens = Number(formatEther(l.args.tokensOut||BigInt(0)));
+    for (const l of logs) {
+      const ethIn = Number(formatEther(l.args.ethIn || BigInt(0)));
+      const tokens = Number(formatEther(l.args.tokensOut || BigInt(0)));
       cumSupply += tokens;
-      cumEth    += ethIn;
-
-      // Harga = total eth terkumpul / total supply beredar
+      cumEth += ethIn;
       const price = cumSupply > 0 ? cumEth / cumSupply : 0;
-
-      const blk = await publicClient.getBlock({blockNumber: l.blockNumber});
+      const blk = await publicClient.getBlock({ blockNumber: l.blockNumber });
       pts.push({ time: Number(blk.timestamp), value: price });
     }
 
-    // Deduplikasi timestamp
-    const unique = pts.filter((p,i,a) => a.findIndex(x => x.time === p.time) === i);
-    setChart(unique);
-  } catch(e){ console.error(e); }
+    const unique = pts.filter((p, i, a) => a.findIndex(x => x.time === p.time) === i);
+    if (unique.length > 0) setChart(unique);
+  } catch(e) { console.error(e); }
 };
 
   const loadTxs = async () => {
