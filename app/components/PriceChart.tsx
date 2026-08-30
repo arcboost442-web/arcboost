@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { createChart, ColorType, CandlestickSeries, HistogramSeries } from "lightweight-charts";
+import { createChart, ColorType, LineStyle, LineSeries, AreaSeries } from "lightweight-charts";
 
 type PricePoint = { time: number; value: number; };
 
@@ -11,26 +11,13 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
   useEffect(() => {
     if (!chartRef.current || data.length === 0) return;
 
-    // Konversi data line ke candlestick simulasi
-    const candles = data.map((d, i) => {
-      const prev = i > 0 ? data[i-1].value : d.value;
-      const change = (Math.random() - 0.48) * d.value * 0.1;
-      const open  = prev;
-      const close = d.value;
-      const high  = Math.max(open, close) * (1 + Math.random() * 0.02);
-      const low   = Math.min(open, close) * (1 - Math.random() * 0.02);
-      return { time: d.time as any, open, high, low, close };
-    });
+    // Filter out zero values dan sort by time
+    const filtered = data
+      .filter(d => d.value > 0)
+      .sort((a, b) => a.time - b.time)
+      .filter((d, i, arr) => i === 0 || d.time !== arr[i-1].time);
 
-    const volumes = data.map((d, i) => {
-      const prev = i > 0 ? data[i-1].value : d.value;
-      const isUp = d.value >= prev;
-      return {
-        time: d.time as any,
-        value: Math.random() * 1000000 + 100000,
-        color: isUp ? "rgba(52,211,153,0.4)" : "rgba(239,68,68,0.4)",
-      };
-    });
+    if (filtered.length === 0) return;
 
     const chart = createChart(chartRef.current, {
       layout: {
@@ -40,11 +27,11 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: "rgba(28,34,53,0.8)" },
-        horzLines: { color: "rgba(28,34,53,0.8)" },
+        vertLines: { color: "rgba(28,34,53,0.6)" },
+        horzLines: { color: "rgba(28,34,53,0.6)" },
       },
       width: chartRef.current.clientWidth,
-      height: 320,
+      height: 300,
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
@@ -54,46 +41,40 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
       },
       rightPriceScale: {
         borderColor: "#1C2235",
-        scaleMargins: { top: 0.1, bottom: 0.3 },
+        scaleMargins: { top: 0.1, bottom: 0.1 },
       },
       crosshair: {
-        mode: 1,
         vertLine: {
-          color: "#2563EB",
+          color: "#3B82F6",
           width: 1,
-          style: 2,
+          style: LineStyle.Dashed,
           labelBackgroundColor: "#2563EB",
         },
         horzLine: {
-          color: "#2563EB",
+          color: "#3B82F6",
           width: 1,
-          style: 2,
+          style: LineStyle.Dashed,
           labelBackgroundColor: "#2563EB",
         },
       },
     });
 
-    // Candlestick series
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor:          "#34D399",
-      downColor:        "#EF4444",
-      borderUpColor:    "#34D399",
-      borderDownColor:  "#EF4444",
-      wickUpColor:      "#34D399",
-      wickDownColor:    "#EF4444",
+    // Area series — clean gradient seperti DexScreener
+    const areaSeries = chart.addSeries(AreaSeries, {
+      lineColor: "#3B82F6",
+      topColor: "rgba(37,99,235,0.3)",
+      bottomColor: "rgba(37,99,235,0.0)",
+      lineWidth: 2,
+      lineStyle: LineStyle.Solid,
+      priceLineVisible: false,
+      lastValueVisible: true,
+      crosshairMarkerVisible: true,
+      crosshairMarkerRadius: 5,
+      crosshairMarkerBorderColor: "#3B82F6",
+      crosshairMarkerBackgroundColor: "#0F1A35",
     });
-    candleSeries.setData(candles);
 
-    // Volume series
-    const volumeSeries = chart.addSeries(HistogramSeries, {
-      priceFormat: { type: "volume" },
-      priceScaleId: "volume",
-    });
-    chart.priceScale("volume").applyOptions({
-      scaleMargins: { top: 0.8, bottom: 0 },
-    });
-    volumeSeries.setData(volumes);
-
+    areaSeries.setData(filtered.map(d => ({ time: d.time as any, value: d.value })));
     chart.timeScale().fitContent();
 
     const handleResize = () => {
