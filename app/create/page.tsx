@@ -13,12 +13,14 @@ const arcTestnet = defineChain({
   testnet: true,
 });
 
-const FACTORY_ADDRESS = "0x8d0EfD38DBc0D6Ee237fd3a1a37Ecdc03446915A" as const;
+const FACTORY_ADDRESS = "0xB63C04aE033C2D27B43DFE32D351c482A227Ea6d" as const;
 const FACTORY_ABI = [
   { name: "createToken", type: "function", stateMutability: "payable",
     inputs: [
       { name: "name", type: "string" }, { name: "symbol", type: "string" },
       { name: "imageURI", type: "string" }, { name: "description", type: "string" },
+      { name: "twitter", type: "string" }, { name: "telegram", type: "string" },
+      { name: "website", type: "string" },
     ], outputs: [{ name: "", type: "address" }] },
 ] as const;
 
@@ -127,8 +129,7 @@ const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const walletClient = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
       await walletClient.writeContract({
         address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "createToken",
-        args: [form.name, form.symbol, form.imageURI || logoPreview, form.description],
-        value: parseEther("0.001"), account: address!,
+args: [form.name, form.symbol, form.imageURI || logoPreview, form.description, form.twitter, form.telegram, form.website],        value: parseEther("0.001"), account: address!,
       });
       setSuccess("Token deployed successfully. Redirecting...");
       setTimeout(() => router.push("/"), 2500);
