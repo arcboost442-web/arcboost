@@ -22,6 +22,9 @@ const publicClient = createPublicClient({
 });
 
 const TOKEN_ABI = [
+  { name: "twitter", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
+{ name: "telegram", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
+{ name: "website", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
   { name: "name", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
   { name: "symbol", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
   { name: "description", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
@@ -98,7 +101,7 @@ export default function TokenPage() {
 
   const loadToken = async () => {
     try {
-      const [name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated] = await Promise.all([
+const [name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website] = await Promise.all([
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "name" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "symbol" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "description" }),
@@ -107,9 +110,11 @@ export default function TokenPage() {
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "totalSupply" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "ethCollected" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "graduated" }),
+        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "twitter" }),
+  publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "telegram" }),
+  publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "website" }),
       ]);
-      setToken({name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated});
-      if (address) {
+setToken({name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website});      if (address) {
         const bal = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [address] });
         setMyBal(formatEther(bal));
       }
@@ -512,16 +517,24 @@ export default function TokenPage() {
               <div style={{fontSize:"10px",fontWeight:600,color:DIM,textTransform:"uppercase",letterSpacing:".07em",marginBottom:"12px"}}>Links</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px"}}>
                 {[
-                  {label:"Explorer",icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>},
-                  {label:"Twitter",icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.402 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.906-5.63z"/></svg>},
-                  {label:"Telegram",icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 5L2 12.5l7 1M21 5l-5 15-5.5-5M21 5L9 13.5"/></svg>},
-                ].map(l=>(
-                  <button key={l.label} style={{background:BG,border:`1px solid ${BORDER2}`,borderRadius:"7px",padding:"9px",fontSize:"11px",color:SUB,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:"5px",fontFamily:"inherit",transition:"all .15s"}}
-                    onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor=BLUE_B;(e.currentTarget as HTMLButtonElement).style.color=BLUE_LT;}}
-                    onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor=BORDER2;(e.currentTarget as HTMLButtonElement).style.color=SUB;}}>
-                    {l.icon}{l.label}
-                  </button>
-                ))}
+  { label: "Explorer", url: `https://testnet.arcscan.app/address/${tokenAddress}`, icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> },
+  { label: "Twitter", url: token.twitter || null, icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.402 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.906-5.63z"/></svg> },
+  { label: "Telegram", url: token.telegram || null, icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 5L2 12.5l7 1M21 5l-5 15-5.5-5M21 5L9 13.5"/></svg> },
+].map(l => (
+  l.url ? (
+    <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+      <button style={{ background: BG, border: `1px solid ${BORDER2}`, borderRadius: "7px", padding: "9px", fontSize: "11px", color: SUB, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", fontFamily: "inherit", transition: "all .15s", width: "100%" }}
+        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BLUE_B; (e.currentTarget as HTMLButtonElement).style.color = BLUE_LT; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BORDER2; (e.currentTarget as HTMLButtonElement).style.color = SUB; }}>
+        {l.icon}{l.label}
+      </button>
+    </a>
+  ) : (
+    <button key={l.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: "7px", padding: "9px", fontSize: "11px", color: DIM, cursor: "not-allowed", display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", fontFamily: "inherit", opacity: 0.4, width: "100%" }}>
+      {l.icon}{l.label}
+    </button>
+  )
+))}
               </div>
             </div>
 
