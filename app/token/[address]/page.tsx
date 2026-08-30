@@ -86,11 +86,15 @@ export default function TokenPage() {
   const [chartData, setChart]   = useState<{time:number;value:number}[]>([]);
   const [txs, setTxs]           = useState<TxItem[]>([]);
   const [activeTab, setTab]     = useState<"discussion"|"txs">("discussion");
+  const [slippage, setSlippage] = useState("1%");
+const [timeframe, setTimeframe] = useState("ALL");
+const [copied, setCopied] = useState(false);
   const [comment, setComment]   = useState("");
   const [comments, setComments] = useState<Comment[]>([
     { addr: "0xaB3d...f12e", text: "Strong fundamentals. Bonding curve moving well.", time: "2m ago", likes: 14 },
     { addr: "0x7f2c...c44a", text: "Who is the dev? This project looks interesting.", time: "8m ago", likes: 5 },
     { addr: "0x3d9f...a71b", text: "Bought the dip. Let it ride.", time: "15m ago", likes: 32 },
+    
   ]);
 
   useEffect(() => {
@@ -227,11 +231,26 @@ setToken({name,symbol,description,imageURI,creator,totalSupply,ethCollected,grad
           <span style={{color:DIM,fontFamily:"monospace",fontSize:"11px"}}>{tokenAddress.slice(0,6)}...{tokenAddress.slice(-4)}</span>
         </div>
         <div style={{marginLeft:"auto",display:"flex",gap:"8px"}}>
-          <button onClick={()=>navigator.clipboard.writeText(tokenAddress)} style={{background:CARD,border:`1px solid ${BORDER2}`,color:SUB,borderRadius:"7px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",display:"flex",alignItems:"center",gap:"5px",fontFamily:"inherit"}}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            Copy
-          </button>
-          <button style={{background:CARD,border:`1px solid ${BORDER2}`,color:SUB,borderRadius:"7px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"inherit"}}>Share</button>
+          <button onClick={() => {
+  navigator.clipboard.writeText(tokenAddress);
+  setCopied(true);
+  setTimeout(() => setCopied(false), 2000);
+}} style={{background:CARD,border:`1px solid ${BORDER2}`,color:copied?BLUE_LT:SUB,borderRadius:"7px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",display:"flex",alignItems:"center",gap:"5px",fontFamily:"inherit"}}>
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+  {copied ? "Copied!" : "Copy"}
+</button>
+<button onClick={() => {
+  const url = `${window.location.origin}/token/${tokenAddress}`;
+  if (navigator.share) {
+    navigator.share({ title: token.name, text: `Check out ${token.name} (${token.symbol}) on ArcBoost!`, url });
+  } else {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+}} style={{background:CARD,border:`1px solid ${BORDER2}`,color:SUB,borderRadius:"7px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"inherit"}}>
+  Share
+</button>
         </div>
       </nav>
 
@@ -292,9 +311,12 @@ setToken({name,symbol,description,imageURI,creator,totalSupply,ethCollected,grad
                   <div style={{fontSize:"11px",color:DIM,marginTop:"2px"}}>Arc Testnet · USDC pair</div>
                 </div>
                 <div style={{display:"flex",gap:"2px",background:BG,border:`1px solid ${BORDER}`,borderRadius:"7px",padding:"3px"}}>
-                  {["1H","4H","1D","ALL"].map((tf,i)=>(
-                    <button key={tf} style={{padding:"4px 10px",borderRadius:"5px",fontSize:"11px",color:i===3?TEXT:SUB,cursor:"pointer",border:"none",background:i===3?BORDER2:"none",fontFamily:"inherit"}}>{tf}</button>
-                  ))}
+                  {["1H","4H","1D","ALL"].map((tf)=>(
+  <button key={tf} onClick={() => setTimeframe(tf)}
+    style={{padding:"4px 10px",borderRadius:"5px",fontSize:"11px",color:timeframe===tf?TEXT:SUB,cursor:"pointer",border:"none",background:timeframe===tf?BORDER2:"none",fontFamily:"inherit"}}>
+    {tf}
+  </button>
+))}
                 </div>
               </div>
               {chartData.length>0
@@ -487,9 +509,12 @@ setToken({name,symbol,description,imageURI,creator,totalSupply,ethCollected,grad
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"11px",color:DIM}}>
                   <span>Slippage</span>
                   <div style={{display:"flex",gap:"4px"}}>
-                    {["0.5%","1%","2%"].map((s,i)=>(
-                      <button key={s} style={{background:i===1?BLUE_DIM:BG,border:`1px solid ${i===1?BLUE_B:BORDER2}`,borderRadius:"4px",padding:"3px 8px",fontSize:"10px",color:i===1?BLUE_LT:DIM,cursor:"pointer"}}>{s}</button>
-                    ))}
+                   {["0.5%","1%","2%"].map((s)=>(
+  <button key={s} onClick={() => setSlippage(s)}
+    style={{background:slippage===s?BLUE_DIM:BG,border:`1px solid ${slippage===s?BLUE_B:BORDER2}`,borderRadius:"4px",padding:"3px 8px",fontSize:"10px",color:slippage===s?BLUE_LT:DIM,cursor:"pointer"}}>
+    {s}
+  </button>
+))}
                   </div>
                 </div>
               </div>
