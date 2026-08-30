@@ -52,8 +52,7 @@ const DIM      = "#374151";
 const GRAD     = "linear-gradient(135deg, #2563EB 0%, #06B6D4 100%)";
 const GRAD2    = "linear-gradient(135deg, #1E3A8A 0%, #0E7490 100%)";
 
-type Token = { tokenAddress: string; name: string; symbol: string; imageURI: string; description: string; creator: string; ethCollected: number; graduated: boolean; };
-
+type Token = { tokenAddress: string; name: string; symbol: string; imageURI: string; description: string; twitter: string; telegram: string; website: string; creator: string; ethCollected: number; graduated: boolean; };
 export default function Home() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -67,25 +66,25 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
   useEffect(() => { setMounted(true); loadTokens(); }, []);
 
   const loadTokens = async () => {
-    try {
-      const addrs = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" });
-      const data = await Promise.all(addrs.map(async (addr) => {
-        const info = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "tokenInfo", args: [addr] });
-        let ethCollected = 0, graduated = false;
-        try {
-          const [eth, grad] = await Promise.all([
-            publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "ethCollected" }),
-            publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "graduated" }),
-          ]);
-          ethCollected = parseFloat(formatEther(eth));
-          graduated = grad as boolean;
-        } catch {}
-        return { tokenAddress: info[0], name: info[1], symbol: info[2], imageURI: info[3], description: info[4], creator: info[5], ethCollected, graduated };
-      }));
-      setTokens(data.reverse());
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
-  };
+  try {
+    const addrs = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" }) as `0x${string}`[];
+    const data = await Promise.all(addrs.map(async (addr: `0x${string}`) => {
+      const info = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "tokenInfo", args: [addr] }) as readonly [string, string, string, string, string, string, string, string, string, bigint];
+      let ethCollected = 0, graduated = false;
+      try {
+        const [eth, grad] = await Promise.all([
+          publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "ethCollected" }),
+          publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "graduated" }),
+        ]);
+        ethCollected = parseFloat(formatEther(eth));
+        graduated = grad as boolean;
+      } catch {}
+      return { tokenAddress: info[0], name: info[1], symbol: info[2], imageURI: info[3], description: info[4], twitter: info[5], telegram: info[6], website: info[7], creator: info[8], ethCollected, graduated };
+    }));
+    setTokens(data.reverse());
+  } catch (err) { console.error(err); }
+  finally { setLoading(false); }
+};
 
   const connectWallet = async () => {
     if (typeof window.ethereum !== "undefined") {
