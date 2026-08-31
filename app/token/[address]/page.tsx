@@ -127,29 +127,26 @@ useEffect(() => {
   try {
     const t = tokenData || token;
     if (!t) return;
-    const ethC = Number(formatEther(t.ethCollected));
-    const totSup = Number(formatEther(t.totalSupply));
-    if (ethC === 0 || totSup === 0) return; // jangan tampilkan chart kalau belum ada transaksi
-    const currentPrice = ethC / totSup;
-    const now = Math.floor(Date.now() / 1000);
-    const points = 30;
-    const pts: {time: number; value: number}[] = [];
-
-    for (let i = 0; i <= points; i++) {
-      const fraction = i / points;
-      // Bonding curve: harga naik seiring supply bertambah
-      const supplyAtPoint = totSup * fraction;
-      const ethAtPoint = ethC * fraction;
-      const price = supplyAtPoint > 0 ? ethAtPoint / supplyAtPoint : 0;
-      if (price > 0) {
-        const timeAtPoint = now - (points - i) * 180;
-        pts.push({ time: timeAtPoint, value: price });
-      }
+    
+    // Baca dari localStorage dulu
+    const key = `chart_${tokenAddress}`;
+    const stored = JSON.parse(localStorage.getItem(key) || "[]");
+    
+    if (stored.length > 0) {
+      setChart(stored);
+      return;
     }
 
-    // Pastikan semua value sama (flat line) kalau harga tidak berubah
-    const uniquePts = pts.filter((p, i, a) => a.findIndex(x => x.time === p.time) === i);
-    if (uniquePts.length > 0) setChart(uniquePts);
+    // Fallback — tampilkan satu titik harga saat ini
+    const ethC = Number(formatEther(t.ethCollected));
+    const totSup = Number(formatEther(t.totalSupply));
+    if (ethC === 0 || totSup === 0) return;
+    const price = ethC / totSup;
+    const now = Math.floor(Date.now() / 1000);
+    setChart([
+      { time: now - 60, value: price },
+      { time: now, value: price },
+    ]);
   } catch(e) { console.error(e); }
 };
 
@@ -167,18 +164,34 @@ const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);
       ].reverse());
     } catch{}
   };
+const savePricePoint = (ethCollected: number, totalSupply: number) => {
+  if (totalSupply === 0) return;
+  const price = ethCollected / totalSupply;
+  const key = `chart_${tokenAddress}`;
+  const existing = JSON.parse(localStorage.getItem(key) || "[]");
+  existing.push({ time: Math.floor(Date.now() / 1000), value: price });
+  if (existing.length > 200) existing.shift();
+  localStorage.setItem(key, JSON.stringify(existing));
+};
 
   const exec = async (fn: () => Promise<void>) => {
-    if (!isConnected) return setError("Connect wallet first.");
-    try {
-      setTxLoading(true); setError(""); setSuccess("");
-      await new Promise(r => setTimeout(r, 3000));
-      await fn();
-      await new Promise(r => setTimeout(r, 2000));
-      loadToken(); loadChartData(); loadTxs();
-    } catch(err:any){ setError(err.message?.slice(0,100)||"Transaction failed."); }
-    finally{ setTxLoading(false); }
-  };
+  if (!isConnected) return setError("Connect wallet first.");
+  try {
+    setTxLoading(true); setError(""); setSuccess("");
+    await new Promise(r => setTimeout(r, 3000));
+    await fn();
+    await new Promise(r => setTimeout(r, 2000));
+    const updatedToken = await loadToken();
+    if (updatedToken) {
+      const ethC = Number(formatEther(updatedToken.ethCollected));
+      const totSup = Number(formatEther(updatedToken.totalSupply));
+      savePricePoint(ethC, totSup);
+      loadChartData(updatedToken);
+    }
+    loadTxs();
+  } catch(err:any){ setError(err.message?.slice(0,100)||"Transaction failed."); }
+  finally{ setTxLoading(false); }
+};
 
   const handleBuy = () => exec(async () => {
   const {createWalletClient, custom} = await import("viem");
