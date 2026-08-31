@@ -158,21 +158,40 @@ export default function TokenPage() {
     if (existing.length > 200) existing.shift();
     localStorage.setItem(key, JSON.stringify(existing));
   };
-
+const saveTx = (type: "BUY"|"SELL", amount: string, tokens: string) => {
+  const key = `txs_${tokenAddress}`;
+  const existing = JSON.parse(localStorage.getItem(key) || "[]");
+  existing.unshift({
+    type,
+    amount,
+    tokens,
+    addr: address ? `${address.slice(0,6)}...${address.slice(-4)}` : "0x????",
+  });
+  if (existing.length > 50) existing.pop();
+  localStorage.setItem(key, JSON.stringify(existing));
+};
   const loadTxs = async () => {
-    try {
-      const latest = await publicClient.getBlockNumber();
-      const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);
-      const [bl,sl] = await Promise.all([
-        publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
-        publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
-      ]);
-      setTxs([
-        ...bl.map(l=>({type:"BUY" as const, amount:Number(formatEther(l.args.ethIn||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensOut||BigInt(0))).toFixed(0), addr:`${l.args.buyer?.slice(0,6)}...${l.args.buyer?.slice(-4)}`})),
-        ...sl.map(l=>({type:"SELL" as const, amount:Number(formatEther(l.args.ethOut||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensIn||BigInt(0))).toFixed(0), addr:`${l.args.seller?.slice(0,6)}...${l.args.seller?.slice(-4)}`})),
-      ].reverse());
-    } catch{}
-  };
+  try {
+    // Baca dari localStorage dulu
+    const key = `txs_${tokenAddress}`;
+    const stored = JSON.parse(localStorage.getItem(key) || "[]");
+    if (stored.length > 0) {
+      setTxs(stored);
+      return;
+    }
+    // Fallback fetch dari chain
+    const latest = await publicClient.getBlockNumber();
+    const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);
+    const [bl,sl] = await Promise.all([
+      publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
+      publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
+    ]);
+    setTxs([
+      ...bl.map(l=>({type:"BUY" as const, amount:Number(formatEther(l.args.ethIn||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensOut||BigInt(0))).toFixed(0), addr:`${l.args.buyer?.slice(0,6)}...${l.args.buyer?.slice(-4)}`})),
+      ...sl.map(l=>({type:"SELL" as const, amount:Number(formatEther(l.args.ethOut||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensIn||BigInt(0))).toFixed(0), addr:`${l.args.seller?.slice(0,6)}...${l.args.seller?.slice(-4)}`})),
+    ].reverse());
+  } catch{}
+};
 
   const exec = async (fn: () => Promise<void>) => {
     if (!isConnected) return setError("Connect wallet first.");
@@ -195,18 +214,20 @@ export default function TokenPage() {
 
   // FIX: handleBuy menggunakan functionName "buy" (bukan "sell")
   const handleBuy = () => exec(async () => {
-    const {createWalletClient, custom} = await import("viem");
-    const wc = createWalletClient({chain: arcTestnet, transport: custom((window as any).ethereum)});
-    await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "buy", value: parseEther(buyAmt), account: address!});
-    setSuccess(`Order filled — ${buyAmt} USDC spent.`);
-  });
+  const {createWalletClient, custom} = await import("viem");
+  const wc = createWalletClient({chain: arcTestnet, transport: custom(window.ethereum)});
+  await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "buy", value: parseEther(buyAmt), account: address!});
+  saveTx("BUY", buyAmt, (Number(buyAmt)/(price||0.000001)).toFixed(0));
+  setSuccess(`Order filled — ${buyAmt} USDC spent.`);
+});
 
-  const handleSell = () => exec(async () => {
-    const {createWalletClient, custom} = await import("viem");
-    const wc = createWalletClient({chain: arcTestnet, transport: custom((window as any).ethereum)});
-    await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "sell", args: [parseEther(sellAmt)], account: address!});
-    setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
-  });
+const handleSell = () => exec(async () => {
+  const {createWalletClient, custom} = await import("viem");
+  const wc = createWalletClient({chain: arcTestnet, transport: custom(window.ethereum)});
+  await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "sell", args: [parseEther(sellAmt)], account: address!});
+  saveTx("SELL", (Number(sellAmt)*price).toFixed(4), sellAmt);
+  setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
+});
 
   if (loading) return (
     <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui"}}>
@@ -418,7 +439,10 @@ export default function TokenPage() {
             <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:"12px",overflow:"hidden"}}>
               <div style={{display:"flex",borderBottom:`1px solid ${BORDER}`}}>
                 {(["buy","sell"] as const).map(m=>(
-                  <button key={m} onClick={()=>{setBsMode(m);setError("");setSuccess("");}}
+  <button key={m} onClick={()=>{
+    if (m === "sell" && !token.graduated) return;
+    setBsMode(m);setError("");setSuccess("");
+  }}
                     style={{flex:1,padding:"13px",fontSize:"13px",fontWeight:600,textTransform:"capitalize",cursor:"pointer",border:"none",fontFamily:"inherit",transition:"all .15s",
                       background:bsMode===m?(m==="buy"?BLUE_DIM:RED_DIM):"none",
                       color:bsMode===m?(m==="buy"?BLUE_LT:RED):SUB,
@@ -459,11 +483,11 @@ export default function TokenPage() {
                 {error&&<div style={{background:RED_DIM,border:"1px solid rgba(239,68,68,0.15)",borderRadius:"7px",padding:"10px 12px",color:RED,fontSize:"12px",marginBottom:"10px",lineHeight:"1.5"}}>{error}</div>}
                 {success&&<div style={{background:BLUE_DIM,border:`1px solid ${BLUE_B}`,borderRadius:"7px",padding:"10px 12px",color:CYAN,fontSize:"12px",marginBottom:"10px"}}>{success}</div>}
 
-                <button onClick={bsMode==="buy"?handleBuy:handleSell} disabled={txLoading||token.graduated||amtInvalid}
-                  style={{width:"100%",background:txLoading||amtInvalid?BORDER2:bsMode==="buy"?GRAD:"linear-gradient(135deg,#EF4444,#DC2626)",
-                    color:txLoading||amtInvalid?DIM:"#fff",border:"none",borderRadius:"9px",padding:"14px",fontSize:"14px",fontWeight:700,
-                    cursor:txLoading||amtInvalid?"not-allowed":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",
-                    boxShadow:txLoading||amtInvalid?"none":bsMode==="buy"?"0 4px 20px rgba(37,99,235,0.3)":"0 4px 20px rgba(239,68,68,0.25)",
+                <button onClick={bsMode==="buy"?handleBuy:handleSell} disabled={txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)}
+                  background:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?BORDER2:bsMode==="buy"?GRAD:"linear-gradient(135deg,#EF4444,#DC2626)",
+color:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?DIM:"#fff",
+cursor:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?"not-allowed":"pointer",
+boxShadow:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?"none":bsMode==="buy"?"0 4px 20px rgba(37,99,235,0.3)":"0 4px 20px rgba(239,68,68,0.25)",
                     transition:"all .15s",marginBottom:"12px"}}>
                   {txLoading?(
                     <>
@@ -472,6 +496,11 @@ export default function TokenPage() {
                     </>
                   ):token.graduated?"Trade on DEX":bsMode==="buy"?`Buy ${token.symbol}`:`Sell ${token.symbol}`}
                 </button>
+                {!token.graduated && bsMode==="sell" && (
+  <div style={{fontSize:"11px",color:DIM,textAlign:"center",marginBottom:"8px"}}>
+    Sell unlocks after token graduates
+  </div>
+)}
 
                 <div style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:"10px",padding:"12px",marginTop:"8px"}}>
                   <div style={{fontSize:"12px",fontWeight:600,color:TEXT,marginBottom:"10px"}}>Slippage Tolerance</div>
