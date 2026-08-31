@@ -221,13 +221,19 @@ const saveTx = (type: "BUY"|"SELL", amount: string, tokens: string) => {
   setSuccess(`Order filled — ${buyAmt} USDC spent.`);
 });
 
-const handleSell = () => exec(async () => {
-  const {createWalletClient, custom} = await import("viem");
-  const wc = createWalletClient({chain: arcTestnet, transport: custom(window.ethereum)});
-  await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "sell", args: [parseEther(sellAmt)], account: address!});
-  saveTx("SELL", (Number(sellAmt)*price).toFixed(4), sellAmt);
-  setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
-});
+const handleSell = () => {
+  if (!token.graduated) {
+    setError("Selling is only available after the token graduates (bonding curve reaches 100%).");
+    return;
+  }
+  exec(async () => {
+    const {createWalletClient, custom} = await import("viem");
+    const wc = createWalletClient({chain: arcTestnet, transport: custom(window.ethereum)});
+    await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "sell", args: [parseEther(sellAmt)], account: address!});
+    saveTx("SELL", (Number(sellAmt)*price).toFixed(4), sellAmt);
+    setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
+  });
+};
 
   if (loading) return (
     <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui"}}>
@@ -483,14 +489,12 @@ const handleSell = () => exec(async () => {
                 {error&&<div style={{background:RED_DIM,border:"1px solid rgba(239,68,68,0.15)",borderRadius:"7px",padding:"10px 12px",color:RED,fontSize:"12px",marginBottom:"10px",lineHeight:"1.5"}}>{error}</div>}
                 {success&&<div style={{background:BLUE_DIM,border:`1px solid ${BLUE_B}`,borderRadius:"7px",padding:"10px 12px",color:CYAN,fontSize:"12px",marginBottom:"10px"}}>{success}</div>}
 
-                <button onClick={bsMode==="buy"?handleBuy:handleSell} disabled={txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)}
+                <button onClick={bsMode==="buy"?handleBuy:handleSell} disabled={txLoading||amtInvalid}
   style={{width:"100%",
-    background:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?BORDER2:bsMode==="buy"?GRAD:"linear-gradient(135deg,#EF4444,#DC2626)",
-    color:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?DIM:"#fff",
-    border:"none",borderRadius:"9px",padding:"14px",fontSize:"14px",fontWeight:700,
-    cursor:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?"not-allowed":"pointer",
-    fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",
-    boxShadow:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?"none":bsMode==="buy"?"0 4px 20px rgba(37,99,235,0.3)":"0 4px 20px rgba(239,68,68,0.25)",
+    background:txLoading||amtInvalid?BORDER2:bsMode==="buy"?GRAD:"linear-gradient(135deg,#EF4444,#DC2626)",
+color:txLoading||amtInvalid?DIM:"#fff",
+cursor:txLoading||amtInvalid?"not-allowed":"pointer",
+boxShadow:txLoading||amtInvalid?"none":bsMode==="buy"?"0 4px 20px rgba(37,99,235,0.3)":"0 4px 20px rgba(239,68,68,0.25)",
     transition:"all .15s",marginBottom:"12px"}}>
   {txLoading?(
     <>
