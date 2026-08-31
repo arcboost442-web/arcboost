@@ -92,10 +92,8 @@ export default function ComingSoon() {
 
       {/* HEADLINE */}
       <h1 style={{ fontSize: "clamp(32px, 6vw, 56px)", fontWeight: 800, lineHeight: 1.08, color: TEXT, margin: "0 0 16px", letterSpacing: "-1.5px", textAlign: "center", maxWidth: "640px" }}>
-        The permissionless<br />
-        <span style={{ background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>token launchpad</span><br />
-        is coming.
-      </h1>
+  <span style={{ background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ArcBoost</span> Launchpad
+</h1>
 
       <p style={{ color: SUB, fontSize: "15px", maxWidth: "420px", margin: "0 0 52px", lineHeight: "1.65", textAlign: "center" }}>
         Deploy tokens on Arc instantly. Trade on bonding curves. Graduate to DEX automatically.
