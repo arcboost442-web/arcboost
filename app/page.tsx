@@ -27,7 +27,7 @@ const FACTORY_ABI = [
     { name: "description", type: "string" }, { name: "twitter", type: "string" },
     { name: "telegram", type: "string" }, { name: "website", type: "string" },
     { name: "creator", type: "address" }, { name: "createdAt", type: "uint256" },
-]},,
+]},
 ] as const;
 
 const TOKEN_ABI = [
@@ -64,6 +64,14 @@ export default function Home() {
 const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di sini
 
   useEffect(() => { setMounted(true); loadTokens(); }, []);
+
+  useEffect(() => {
+    const seenHowItWorks = localStorage.getItem("arcboost_seen_how_it_works");
+    if (!seenHowItWorks) {
+      setShowHowItWorks(true);
+      localStorage.setItem("arcboost_seen_how_it_works", "1");
+    }
+  }, []);
 
   const loadTokens = async () => {
   try {
