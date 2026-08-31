@@ -25,7 +25,6 @@ function useCountdown() {
 }
 
 export default function ComingSoon() {
-  const { days, hours, minutes, seconds } = useCountdown();
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [focused, setFocused] = useState(false);
