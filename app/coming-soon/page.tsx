@@ -87,7 +87,7 @@ export default function ComingSoon() {
       {/* BADGE */}
       <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: BLUE_DIM, border: `1px solid ${BLUE_B}`, borderRadius: "20px", padding: "5px 14px", fontSize: "11px", fontWeight: 600, color: BLUE_LT, marginBottom: "28px", letterSpacing: ".04em", textTransform: "uppercase" }}>
         <div style={{ width: "6px", height: "6px", background: CYAN, borderRadius: "50%", boxShadow: `0 0 8px ${CYAN}`, animation: "pulse 2s ease-in-out infinite" }} />
-        Launching 16 September 2025
+        Launching 16 September 2026
       </div>
 
       {/* HEADLINE */}
