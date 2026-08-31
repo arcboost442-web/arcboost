@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  // Izinkan akses ke /coming-soon, /api, dan _next
   if (
     pathname.startsWith("/coming-soon") ||
     pathname.startsWith("/api") ||
@@ -12,7 +11,6 @@ export function middleware(request: NextRequest) {
   ) {
     return NextResponse.next();
   }
-  // Redirect semua route lain ke coming-soon
   return NextResponse.redirect(new URL("/coming-soon", request.url));
 }
 
