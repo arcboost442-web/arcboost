@@ -52,6 +52,7 @@ const DIM      = "#374151";
 const GRAD     = "linear-gradient(135deg, #2563EB 0%, #06B6D4 100%)";
 const GRAD2    = "linear-gradient(135deg, #1E3A8A 0%, #0E7490 100%)";
 
+
 type Token = { tokenAddress: string; name: string; symbol: string; imageURI: string; description: string; twitter: string; telegram: string; website: string; creator: string; ethCollected: number; graduated: boolean; };
 export default function Home() {
   const { address, isConnected } = useAccount();

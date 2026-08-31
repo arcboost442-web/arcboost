@@ -21,27 +21,7 @@ const LAUNCH_DATE = new Date("2025-09-16T00:00:00+07:00");
 function useCountdown() {
   const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      const diff = LAUNCH_DATE.getTime() - now.getTime();
-      if (diff <= 0) {
-        setTime({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-      setTime({
-        days:    Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours:   Math.floor((diff / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((diff / (1000 * 60)) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      });
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  return time;
+  
 }
 
 export default function ComingSoon() {
@@ -99,38 +79,6 @@ export default function ComingSoon() {
         Deploy tokens on Arc instantly. Trade on bonding curves. Graduate to DEX automatically.
       </p>
 
-      {/* COUNTDOWN */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "52px", flexWrap: "wrap", justifyContent: "center" }}>
-        {[
-          { value: pad(days),    label: "Days" },
-          { value: pad(hours),   label: "Hours" },
-          { value: pad(minutes), label: "Minutes" },
-          { value: pad(seconds), label: "Seconds" },
-        ].map((unit, i) => (
-          <div key={unit.label} style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{
-                background: CARD,
-                border: `1px solid ${BORDER}`,
-                borderRadius: "14px",
-                padding: "20px 24px",
-                minWidth: "88px",
-                position: "relative",
-                overflow: "hidden",
-              }}>
-                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "radial-gradient(ellipse at 50% 0%, rgba(37,99,235,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
-                <div style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 800, color: TEXT, letterSpacing: "-1px", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
-                  {unit.value}
-                </div>
-              </div>
-              <div style={{ fontSize: "11px", color: DIM, marginTop: "8px", textTransform: "uppercase", letterSpacing: ".08em" }}>{unit.label}</div>
-            </div>
-            {i < 3 && (
-              <div style={{ fontSize: "28px", fontWeight: 700, color: BORDER2, marginBottom: "22px" }}>:</div>
-            )}
-          </div>
-        ))}
-      </div>
 
       
 
