@@ -9,6 +9,7 @@ export function middleware(request: NextRequest) {
   // Selalu izinkan route ini
   if (
     pathname.startsWith("/coming-soon") ||
+        pathname.startsWith("/admin") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
