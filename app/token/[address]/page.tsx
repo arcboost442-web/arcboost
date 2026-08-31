@@ -484,18 +484,21 @@ const handleSell = () => exec(async () => {
                 {success&&<div style={{background:BLUE_DIM,border:`1px solid ${BLUE_B}`,borderRadius:"7px",padding:"10px 12px",color:CYAN,fontSize:"12px",marginBottom:"10px"}}>{success}</div>}
 
                 <button onClick={bsMode==="buy"?handleBuy:handleSell} disabled={txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)}
-                  background:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?BORDER2:bsMode==="buy"?GRAD:"linear-gradient(135deg,#EF4444,#DC2626)",
-color:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?DIM:"#fff",
-cursor:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?"not-allowed":"pointer",
-boxShadow:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?"none":bsMode==="buy"?"0 4px 20px rgba(37,99,235,0.3)":"0 4px 20px rgba(239,68,68,0.25)",
-                    transition:"all .15s",marginBottom:"12px"}}>
-                  {txLoading?(
-                    <>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                      Processing...
-                    </>
-                  ):token.graduated?"Trade on DEX":bsMode==="buy"?`Buy ${token.symbol}`:`Sell ${token.symbol}`}
-                </button>
+  style={{width:"100%",
+    background:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?BORDER2:bsMode==="buy"?GRAD:"linear-gradient(135deg,#EF4444,#DC2626)",
+    color:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?DIM:"#fff",
+    border:"none",borderRadius:"9px",padding:"14px",fontSize:"14px",fontWeight:700,
+    cursor:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?"not-allowed":"pointer",
+    fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",
+    boxShadow:txLoading||amtInvalid||(bsMode==="sell"&&!token.graduated)?"none":bsMode==="buy"?"0 4px 20px rgba(37,99,235,0.3)":"0 4px 20px rgba(239,68,68,0.25)",
+    transition:"all .15s",marginBottom:"12px"}}>
+  {txLoading?(
+    <>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      Processing...
+    </>
+  ):bsMode==="buy"?`Buy ${token.symbol}`:token.graduated?`Sell ${token.symbol}`:"Sell (After Graduation)"}
+</button>
                 {!token.graduated && bsMode==="sell" && (
   <div style={{fontSize:"11px",color:DIM,textAlign:"center",marginBottom:"8px"}}>
     Sell unlocks after token graduates
