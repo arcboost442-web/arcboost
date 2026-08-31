@@ -125,20 +125,15 @@ export default function TokenPage() {
   const loadChartData = (tokenData: any) => {
     try {
       if (!tokenData) return;
-
-      // Cek localStorage dulu
       const key = `chart_${tokenAddress}`;
       const stored = JSON.parse(localStorage.getItem(key) || "[]");
       if (stored.length > 1) {
         setChart(stored);
         return;
       }
-
-      // Fallback — generate titik harga berdasarkan data saat ini
       const ethC = Number(formatEther(tokenData.ethCollected));
       const totSup = Number(formatEther(tokenData.totalSupply));
       if (ethC === 0 || totSup === 0) return;
-
       const price = ethC / totSup;
       const now = Math.floor(Date.now() / 1000);
       setChart([
@@ -158,40 +153,21 @@ export default function TokenPage() {
     if (existing.length > 200) existing.shift();
     localStorage.setItem(key, JSON.stringify(existing));
   };
-const saveTx = (type: "BUY"|"SELL", amount: string, tokens: string) => {
-  const key = `txs_${tokenAddress}`;
-  const existing = JSON.parse(localStorage.getItem(key) || "[]");
-  existing.unshift({
-    type,
-    amount,
-    tokens,
-    addr: address ? `${address.slice(0,6)}...${address.slice(-4)}` : "0x????",
-  });
-  if (existing.length > 50) existing.pop();
-  localStorage.setItem(key, JSON.stringify(existing));
-};
+
   const loadTxs = async () => {
-  try {
-    // Baca dari localStorage dulu
-    const key = `txs_${tokenAddress}`;
-    const stored = JSON.parse(localStorage.getItem(key) || "[]");
-    if (stored.length > 0) {
-      setTxs(stored);
-      return;
-    }
-    // Fallback fetch dari chain
-    const latest = await publicClient.getBlockNumber();
-    const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);
-    const [bl,sl] = await Promise.all([
-      publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
-      publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
-    ]);
-    setTxs([
-      ...bl.map(l=>({type:"BUY" as const, amount:Number(formatEther(l.args.ethIn||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensOut||BigInt(0))).toFixed(0), addr:`${l.args.buyer?.slice(0,6)}...${l.args.buyer?.slice(-4)}`})),
-      ...sl.map(l=>({type:"SELL" as const, amount:Number(formatEther(l.args.ethOut||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensIn||BigInt(0))).toFixed(0), addr:`${l.args.seller?.slice(0,6)}...${l.args.seller?.slice(-4)}`})),
-    ].reverse());
-  } catch{}
-};
+    try {
+      const latest = await publicClient.getBlockNumber();
+      const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);
+      const [bl,sl] = await Promise.all([
+        publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
+        publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
+      ]);
+      setTxs([
+        ...bl.map(l=>({type:"BUY" as const, amount:Number(formatEther(l.args.ethIn||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensOut||BigInt(0))).toFixed(0), addr:`${l.args.buyer?.slice(0,6)}...${l.args.buyer?.slice(-4)}`})),
+        ...sl.map(l=>({type:"SELL" as const, amount:Number(formatEther(l.args.ethOut||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensIn||BigInt(0))).toFixed(0), addr:`${l.args.seller?.slice(0,6)}...${l.args.seller?.slice(-4)}`})),
+      ].reverse());
+    } catch{}
+  };
 
   const exec = async (fn: () => Promise<void>) => {
     if (!isConnected) return setError("Connect wallet first.");
@@ -208,50 +184,69 @@ const saveTx = (type: "BUY"|"SELL", amount: string, tokens: string) => {
         loadChartData(updatedToken);
       }
       loadTxs();
-    } catch(err:any){ setError(err.message?.slice(0,100)||"Transaction failed."); }
+    } catch(err:any){ setError(err.message?.slice(0,120)||"Transaction failed."); }
     finally{ setTxLoading(false); }
   };
 
-  // FIX: handleBuy menggunakan functionName "buy" (bukan "sell")
+  // FIX: handleBuy pakai functionName "buy"
   const handleBuy = () => exec(async () => {
-  const {createWalletClient, custom} = await import("viem");
-  const wc = createWalletClient({chain: arcTestnet, transport: custom(window.ethereum)});
-  await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "buy", value: parseEther(buyAmt), account: address!});
-  saveTx("BUY", buyAmt, (Number(buyAmt)/(price||0.000001)).toFixed(0));
-  setSuccess(`Order filled — ${buyAmt} USDC spent.`);
-});
-
-const handleSell = () => {
-  if (!token.graduated) {
-    setError("Selling is only available after the token graduates (bonding curve reaches 100%).");
-    return;
-  }
-  exec(async () => {
     const {createWalletClient, custom} = await import("viem");
-    const wc = createWalletClient({chain: arcTestnet, transport: custom(window.ethereum)});
-    await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "sell", args: [parseEther(sellAmt)], account: address!});
-    saveTx("SELL", (Number(sellAmt)*price).toFixed(4), sellAmt);
-    setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
+    const wc = createWalletClient({chain: arcTestnet, transport: custom((window as any).ethereum)});
+    await wc.writeContract({
+      address: tokenAddress,
+      abi: TOKEN_ABI,
+      functionName: "buy",
+      value: parseEther(buyAmt),
+      account: address!,
+    });
+    setSuccess(`Order filled — ${buyAmt} USDC spent.`);
   });
-};
+
+  // FIX: handleSell — aktif tapi kasih error kalau belum graduated
+  const handleSell = () => {
+    if (!token.graduated) {
+      setError("Selling is only available after the token graduates to DEX (bonding curve reaches 100%).");
+      return;
+    }
+    exec(async () => {
+      const {createWalletClient, custom} = await import("viem");
+      const wc = createWalletClient({chain: arcTestnet, transport: custom((window as any).ethereum)});
+      await wc.writeContract({
+        address: tokenAddress,
+        abi: TOKEN_ABI,
+        functionName: "sell",
+        args: [parseEther(sellAmt)],
+        account: address!,
+      });
+      setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
+    });
+  };
 
   if (loading) return (
     <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui"}}>
       <div style={{color:SUB,fontSize:"13px",letterSpacing:".06em",textTransform:"uppercase"}}>Loading market data...</div>
     </div>
   );
+
   if (!token) return (
     <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui"}}>
       <div style={{color:SUB,fontSize:"13px"}}>Token not found.</div>
     </div>
   );
 
+  // FIX: semua kalkulasi di bawah loading check supaya token pasti ada
   const ethC   = Number(formatEther(token.ethCollected));
   const totSup = Number(formatEther(token.totalSupply));
-  const pct    = Math.min((ethC/1)*100,100);
-  const price  = totSup>0?ethC/totSup:0;
-  const activeAmt  = bsMode==="buy"?buyAmt:sellAmt;
-  const amtInvalid = activeAmt===""||isNaN(Number(activeAmt))||Number(activeAmt)<=0;
+  const pct    = Math.min((ethC / 1) * 100, 100);
+  const price  = totSup > 0 ? ethC / totSup : 0;
+  const activeAmt  = bsMode === "buy" ? buyAmt : sellAmt;
+  const amtInvalid = activeAmt === "" || isNaN(Number(activeAmt)) || Number(activeAmt) <= 0;
+  const btnDisabled = txLoading || amtInvalid;
+  const btnBg = btnDisabled
+    ? BORDER2
+    : bsMode === "buy"
+      ? GRAD
+      : "linear-gradient(135deg, #EF4444, #DC2626)";
 
   return (
     <main style={{background:BG,minHeight:"100vh",color:TEXT,fontFamily:"-apple-system,BlinkMacSystemFont,'Inter','SF Pro Display',sans-serif"}}>
@@ -260,7 +255,7 @@ const handleSell = () => {
 
       {/* TOP NAV */}
       <nav style={{position:"sticky",top:0,zIndex:100,borderBottom:`1px solid ${BORDER}`,padding:"0 24px",display:"flex",alignItems:"center",height:"56px",background:"rgba(8,9,15,0.9)",backdropFilter:"blur(16px)",gap:"12px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:"9px",marginRight:"8px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:"9px",marginRight:"8px",cursor:"pointer"}} onClick={() => router.push("/")}>
           <div style={{width:"28px",height:"28px",borderRadius:"7px",background:GRAD,display:"flex",alignItems:"center",justifyContent:"center"}}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           </div>
@@ -278,7 +273,7 @@ const handleSell = () => {
             navigator.clipboard.writeText(tokenAddress);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
-          }} style={{background:CARD,border:`1px solid ${BORDER2}`,color:copied?BLUE_LT:SUB,borderRadius:"7px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",display:"flex",alignItems:"center",gap:"5px",fontFamily:"inherit"}}>
+          }} style={{background:CARD,border:`1px solid ${BORDER2}`,color:copied?BLUE_LT:SUB,borderRadius:"7px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",display:"flex",alignItems:"center",gap:"5px",fontFamily:"inherit",transition:"color .15s"}}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             {copied ? "Copied!" : "Copy"}
           </button>
@@ -354,15 +349,15 @@ const handleSell = () => {
                   <div style={{fontSize:"11px",color:DIM,marginTop:"2px"}}>Arc Testnet · USDC pair</div>
                 </div>
                 <div style={{display:"flex",gap:"2px",background:BG,border:`1px solid ${BORDER}`,borderRadius:"7px",padding:"3px"}}>
-                  {["1H","4H","1D","ALL"].map((tf)=>(
+                  {["1H","4H","1D","ALL"].map(tf=>(
                     <button key={tf} onClick={() => setTimeframe(tf)}
-                      style={{padding:"4px 10px",borderRadius:"5px",fontSize:"11px",color:timeframe===tf?TEXT:SUB,cursor:"pointer",border:"none",background:timeframe===tf?BORDER2:"none",fontFamily:"inherit"}}>
+                      style={{padding:"4px 10px",borderRadius:"5px",fontSize:"11px",color:timeframe===tf?TEXT:SUB,cursor:"pointer",border:"none",background:timeframe===tf?BORDER2:"none",fontFamily:"inherit",transition:"all .15s"}}>
                       {tf}
                     </button>
                   ))}
                 </div>
               </div>
-              {chartData.length>0
+              {chartData.length > 0
                 ? <PriceChart data={chartData}/>
                 : <div style={{height:"260px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"8px"}}>
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={DIM} strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -403,8 +398,12 @@ const handleSell = () => {
 
             {/* TRANSACTIONS */}
             <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:"12px",overflow:"hidden"}}>
-              <div style={{padding:"12px 16px",borderBottom:`1px solid ${BORDER}`,display:"flex",alignItems:"center"}}>
+              <div style={{padding:"12px 16px",borderBottom:`1px solid ${BORDER}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                 <span style={{fontSize:"12px",fontWeight:600,color:TEXT}}>Transactions</span>
+                <button onClick={loadTxs} style={{background:"none",border:"none",color:DIM,cursor:"pointer",fontSize:"11px",display:"flex",alignItems:"center",gap:"4px",fontFamily:"inherit"}}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                  Refresh
+                </button>
               </div>
               <div style={{padding:"16px"}}>
                 <table style={{width:"100%",fontSize:"12px",borderCollapse:"collapse"}}>
@@ -445,10 +444,7 @@ const handleSell = () => {
             <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:"12px",overflow:"hidden"}}>
               <div style={{display:"flex",borderBottom:`1px solid ${BORDER}`}}>
                 {(["buy","sell"] as const).map(m=>(
-  <button key={m} onClick={()=>{
-    if (m === "sell" && !token.graduated) return;
-    setBsMode(m);setError("");setSuccess("");
-  }}
+                  <button key={m} onClick={()=>{setBsMode(m);setError("");setSuccess("");}}
                     style={{flex:1,padding:"13px",fontSize:"13px",fontWeight:600,textTransform:"capitalize",cursor:"pointer",border:"none",fontFamily:"inherit",transition:"all .15s",
                       background:bsMode===m?(m==="buy"?BLUE_DIM:RED_DIM):"none",
                       color:bsMode===m?(m==="buy"?BLUE_LT:RED):SUB,
@@ -457,21 +453,38 @@ const handleSell = () => {
                   </button>
                 ))}
               </div>
+
               <div style={{padding:"16px"}}>
                 <div style={{fontSize:"10px",color:SUB,textTransform:"uppercase",letterSpacing:".07em",marginBottom:"6px"}}>
                   {bsMode==="buy"?"Amount (USDC)":`Amount (${token.symbol})`}
                 </div>
                 <div style={{background:BG,border:`1px solid ${BORDER2}`,borderRadius:"8px",display:"flex",alignItems:"center",padding:"10px 13px",marginBottom:"10px"}}>
-                  <input type="number" min="0" step="any" value={bsMode==="buy"?buyAmt:sellAmt}
+                  <input
+                    type="number" min="0" step="any"
+                    value={bsMode==="buy"?buyAmt:sellAmt}
                     onChange={e=>{
                       const v = e.target.value;
                       if (v.includes("-")) return;
                       bsMode==="buy"?setBuyAmt(v):setSellAmt(v);
                     }}
-                    style={{flex:1,background:"none",border:"none",color:TEXT,fontSize:"18px",fontWeight:700,outline:"none",fontFamily:"inherit",width:"100%"}}/>
-                  <span style={{color:SUB,fontSize:"12px",fontWeight:500}}>{bsMode==="buy"?"USDC":token.symbol}</span>
+                    style={{flex:1,background:"none",border:"none",color:TEXT,fontSize:"18px",fontWeight:700,outline:"none",fontFamily:"inherit",width:"100%"}}
+                  />
+                  <span style={{color:SUB,fontSize:"12px",fontWeight:500,flexShrink:0}}>{bsMode==="buy"?"USDC":token.symbol}</span>
                 </div>
 
+                {/* Preset amounts for buy */}
+                {bsMode==="buy" && (
+                  <div style={{display:"flex",gap:"6px",marginBottom:"10px"}}>
+                    {["0.01","0.1","0.5","1.0"].map(p=>(
+                      <button key={p} onClick={()=>setBuyAmt(p)}
+                        style={{flex:1,background:buyAmt===p?BLUE_DIM:BG,border:`1px solid ${buyAmt===p?BLUE_B:BORDER2}`,borderRadius:"6px",padding:"6px 0",fontSize:"11px",color:buyAmt===p?BLUE_LT:DIM,cursor:"pointer",fontFamily:"inherit",fontWeight:buyAmt===p?600:400,transition:"all .15s"}}>
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Order summary */}
                 <div style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:"8px",padding:"12px",marginBottom:"12px"}}>
                   {[
                     {label:"You receive",value:bsMode==="buy"?`~${(Number(buyAmt)/(price||0.000001)).toFixed(0)} ${token.symbol}`:`~${(Number(sellAmt)*price).toFixed(6)} USDC`,blue:true},
@@ -486,35 +499,64 @@ const handleSell = () => {
                   ))}
                 </div>
 
+                {/* Sell info banner */}
+                {bsMode==="sell" && !token.graduated && (
+                  <div style={{background:"#100D00",border:"1px solid rgba(251,191,36,0.2)",borderRadius:"7px",padding:"10px 12px",marginBottom:"10px",display:"flex",gap:"8px",alignItems:"flex-start"}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" strokeWidth="2" style={{flexShrink:0,marginTop:"1px"}}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div style={{fontSize:"11px",color:"#92400E",lineHeight:"1.5"}}>
+                      <strong style={{color:"#FBBF24",display:"block",marginBottom:"2px"}}>Selling locks until graduation</strong>
+                      Sell your tokens only after the bonding curve reaches 100% and the token graduates to DEX.
+                    </div>
+                  </div>
+                )}
+
                 {error&&<div style={{background:RED_DIM,border:"1px solid rgba(239,68,68,0.15)",borderRadius:"7px",padding:"10px 12px",color:RED,fontSize:"12px",marginBottom:"10px",lineHeight:"1.5"}}>{error}</div>}
                 {success&&<div style={{background:BLUE_DIM,border:`1px solid ${BLUE_B}`,borderRadius:"7px",padding:"10px 12px",color:CYAN,fontSize:"12px",marginBottom:"10px"}}>{success}</div>}
 
-                <button onClick={bsMode==="buy"?handleBuy:handleSell} disabled={txLoading||amtInvalid}
-  style={{width:"100%",
-    background:txLoading||amtInvalid?BORDER2:bsMode==="buy"?GRAD:"linear-gradient(135deg,#EF4444,#DC2626)",
-color:txLoading||amtInvalid?DIM:"#fff",
-cursor:txLoading||amtInvalid?"not-allowed":"pointer",
-boxShadow:txLoading||amtInvalid?"none":bsMode==="buy"?"0 4px 20px rgba(37,99,235,0.3)":"0 4px 20px rgba(239,68,68,0.25)",
-    transition:"all .15s",marginBottom:"12px"}}>
-  {txLoading?(
-    <>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-      Processing...
-    </>
-  ):bsMode==="buy"?`Buy ${token.symbol}`:token.graduated?`Sell ${token.symbol}`:"Sell (After Graduation)"}
-</button>
-                {!token.graduated && bsMode==="sell" && (
-  <div style={{fontSize:"11px",color:DIM,textAlign:"center",marginBottom:"8px"}}>
-    Sell unlocks after token graduates
-  </div>
-)}
+                {/* FIX: tombol buy/sell dengan style lengkap */}
+                <button
+                  onClick={bsMode==="buy"?handleBuy:handleSell}
+                  disabled={btnDisabled}
+                  style={{
+                    width:"100%",
+                    background: btnBg,
+                    color: btnDisabled?"#666":"#fff",
+                    border:"none",
+                    borderRadius:"9px",
+                    padding:"14px",
+                    fontSize:"14px",
+                    fontWeight:700,
+                    cursor: btnDisabled?"not-allowed":"pointer",
+                    fontFamily:"inherit",
+                    display:"flex",
+                    alignItems:"center",
+                    justifyContent:"center",
+                    gap:"8px",
+                    boxShadow: btnDisabled?"none":bsMode==="buy"?"0 4px 20px rgba(37,99,235,0.3)":"0 4px 20px rgba(239,68,68,0.25)",
+                    transition:"all .15s",
+                    marginBottom:"12px",
+                    opacity: btnDisabled?0.6:1,
+                  }}>
+                  {txLoading ? (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                      Processing...
+                    </>
+                  ) : bsMode==="buy"
+                    ? `Buy ${token.symbol}`
+                    : token.graduated
+                      ? `Sell ${token.symbol}`
+                      : `Sell ${token.symbol}`
+                  }
+                </button>
 
-                <div style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:"10px",padding:"12px",marginTop:"8px"}}>
-                  <div style={{fontSize:"12px",fontWeight:600,color:TEXT,marginBottom:"10px"}}>Slippage Tolerance</div>
-                  <div style={{display:"flex",gap:"6px",marginBottom:"10px"}}>
-                    {["1%","5%","10%","20%","49%"].map((s)=>(
-                      <button key={s} onClick={() => setSlippage(s)}
-                        style={{flex:1,padding:"7px 0",borderRadius:"7px",fontSize:"11px",fontWeight:600,cursor:"pointer",border:"none",fontFamily:"inherit",transition:"all .15s",
+                {/* Slippage */}
+                <div style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:"10px",padding:"12px",marginTop:"4px"}}>
+                  <div style={{fontSize:"11px",fontWeight:600,color:SUB,marginBottom:"8px",textTransform:"uppercase",letterSpacing:".05em"}}>Slippage Tolerance</div>
+                  <div style={{display:"flex",gap:"5px",marginBottom:"8px"}}>
+                    {["1%","5%","10%","20%","49%"].map(s=>(
+                      <button key={s} onClick={()=>setSlippage(s)}
+                        style={{flex:1,padding:"6px 0",borderRadius:"6px",fontSize:"11px",fontWeight:600,cursor:"pointer",border:"none",fontFamily:"inherit",transition:"all .15s",
                           background:slippage===s?"#063ccf":CARD2,
                           color:slippage===s?"#fff":SUB}}>
                         {s}
@@ -523,12 +565,12 @@ boxShadow:txLoading||amtInvalid?"none":bsMode==="buy"?"0 4px 20px rgba(37,99,235
                   </div>
                   <div style={{display:"flex",alignItems:"center",background:CARD2,border:`1px solid ${BORDER2}`,borderRadius:"7px",overflow:"hidden"}}>
                     <input type="number" value={slippage.replace("%","")}
-                      onChange={e => setSlippage(e.target.value + "%")}
+                      onChange={e=>setSlippage(e.target.value+"%")}
                       min="0.1" max="100" step="0.1"
-                      style={{flex:1,background:"none",border:"none",color:TEXT,fontSize:"14px",padding:"8px 12px",outline:"none",fontFamily:"inherit"}}/>
-                    <span style={{padding:"0 12px",color:SUB,fontSize:"13px",fontWeight:500}}>%</span>
+                      style={{flex:1,background:"none",border:"none",color:TEXT,fontSize:"13px",padding:"7px 10px",outline:"none",fontFamily:"inherit"}}/>
+                    <span style={{padding:"0 10px",color:SUB,fontSize:"12px",fontWeight:500}}>%</span>
                   </div>
-                  <div style={{fontSize:"10px",color:DIM,marginTop:"7px"}}>Higher slippage = better chance of success, but worse price</div>
+                  <div style={{fontSize:"10px",color:DIM,marginTop:"6px"}}>Higher slippage = better fill rate, worse price</div>
                 </div>
               </div>
             </div>
@@ -555,20 +597,20 @@ boxShadow:txLoading||amtInvalid?"none":bsMode==="buy"?"0 4px 20px rgba(37,99,235
               <div style={{fontSize:"10px",fontWeight:600,color:DIM,textTransform:"uppercase",letterSpacing:".07em",marginBottom:"12px"}}>Links</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px"}}>
                 {[
-                  { label: "Explorer", url: `https://testnet.arcscan.app/address/${tokenAddress}`, icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> },
-                  { label: "Twitter", url: token.twitter || null, icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.402 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.906-5.63z"/></svg> },
-                  { label: "Telegram", url: token.telegram || null, icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 5L2 12.5l7 1M21 5l-5 15-5.5-5M21 5L9 13.5"/></svg> },
-                ].map(l => (
+                  { label:"Explorer", url:`https://testnet.arcscan.app/address/${tokenAddress}`, icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> },
+                  { label:"Twitter", url:token.twitter||null, icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.402 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.906-5.63z"/></svg> },
+                  { label:"Telegram", url:token.telegram||null, icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 5L2 12.5l7 1M21 5l-5 15-5.5-5M21 5L9 13.5"/></svg> },
+                ].map(l=>(
                   l.url ? (
-                    <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-                      <button style={{ background: BG, border: `1px solid ${BORDER2}`, borderRadius: "7px", padding: "9px", fontSize: "11px", color: SUB, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", fontFamily: "inherit", transition: "all .15s", width: "100%" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BLUE_B; (e.currentTarget as HTMLButtonElement).style.color = BLUE_LT; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BORDER2; (e.currentTarget as HTMLButtonElement).style.color = SUB; }}>
+                    <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:"none"}}>
+                      <button style={{background:BG,border:`1px solid ${BORDER2}`,borderRadius:"7px",padding:"9px",fontSize:"11px",color:SUB,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:"5px",fontFamily:"inherit",transition:"all .15s",width:"100%"}}
+                        onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor=BLUE_B;(e.currentTarget as HTMLButtonElement).style.color=BLUE_LT;}}
+                        onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor=BORDER2;(e.currentTarget as HTMLButtonElement).style.color=SUB;}}>
                         {l.icon}{l.label}
                       </button>
                     </a>
                   ) : (
-                    <button key={l.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: "7px", padding: "9px", fontSize: "11px", color: DIM, cursor: "not-allowed", display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", fontFamily: "inherit", opacity: 0.4, width: "100%" }}>
+                    <button key={l.label} style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:"7px",padding:"9px",fontSize:"11px",color:DIM,cursor:"not-allowed",display:"flex",flexDirection:"column",alignItems:"center",gap:"5px",fontFamily:"inherit",opacity:0.4,width:"100%"}}>
                       {l.icon}{l.label}
                     </button>
                   )
