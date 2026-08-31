@@ -132,42 +132,7 @@ export default function ComingSoon() {
         ))}
       </div>
 
-      {/* WAITLIST */}
-      <div style={{ width: "100%", maxWidth: "420px", marginBottom: "48px" }}>
-        {submitted ? (
-          <div style={{ background: BLUE_DIM, border: `1px solid ${BLUE_B}`, borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "10px" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={CYAN} strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: 600, color: TEXT, marginBottom: "2px" }}>You're on the list</div>
-              <div style={{ fontSize: "12px", color: SUB }}>We'll notify you when ArcBoost goes live.</div>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div style={{ fontSize: "12px", color: SUB, marginBottom: "10px", textAlign: "center" }}>Get notified when we launch</div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <div style={{ flex: 1, background: CARD, border: `1px solid ${focused ? BLUE_B : BORDER2}`, borderRadius: "10px", display: "flex", alignItems: "center", padding: "0 14px", transition: "border-color .15s" }}>
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  onKeyDown={e => e.key === "Enter" && handleSubmit()}
-                  style={{ flex: 1, background: "none", border: "none", color: TEXT, fontSize: "13px", padding: "12px 0", outline: "none", fontFamily: "inherit" }}
-                />
-              </div>
-              <button onClick={handleSubmit}
-                style={{ background: GRAD, color: "#fff", border: "none", borderRadius: "10px", padding: "12px 20px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", boxShadow: "0 4px 20px rgba(37,99,235,0.35)", transition: "opacity .15s" }}
-                onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = "0.85"}
-                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = "1"}>
-                Notify me
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      
 
       {/* HOW IT WORKS */}
       <div style={{ width: "100%", maxWidth: "480px", background: CARD, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "28px", marginBottom: "32px" }}>
