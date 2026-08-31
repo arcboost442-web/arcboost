@@ -4,6 +4,9 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   title: "ArcBoost",
   description: "Permissionless token launchpad on Arc",
+  icons: {
+    icon: "/icon.svg",
+  }
 };
 
 export default function RootLayout({
@@ -18,4 +21,5 @@ export default function RootLayout({
       </body>
     </html>
   );
+
 }
