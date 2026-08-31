@@ -165,16 +165,37 @@ const handleSetGradTarget = () => execTx(async () => {
   if (!newGradTarget || isNaN(Number(newGradTarget))) throw new Error("Invalid target amount.");
   const { createWalletClient, custom } = await import("viem");
   const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
-  // Update semua token yang belum graduated
-  const addrs = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" });
+  
+  const addrs = await publicClient.readContract({ 
+    address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" 
+  });
+  
+  let updated = 0;
   for (const addr of addrs) {
     try {
-      const graduated = await publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "graduated" });
+      const graduated = await publicClient.readContract({ 
+        address: addr, abi: TOKEN_ABI, functionName: "graduated" 
+      });
       if (!graduated) {
-        await wc.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setTokenGradTarget", args: [addr, parseEther(newGradTarget)], account: address! });
+        await wc.writeContract({ 
+          address: addr,
+          abi: [{ 
+            name: "setGradTarget", 
+            type: "function", 
+            stateMutability: "nonpayable", 
+            inputs: [{ name: "newTarget", type: "uint256" }], 
+            outputs: [] 
+          }],
+          functionName: "setGradTarget", 
+          args: [parseEther(newGradTarget)], 
+          account: address! 
+        });
+        updated++;
       }
-    } catch {}
+    } catch(e) { console.error(e); }
   }
+  
+  if (updated === 0) throw new Error("No active tokens to update.");
   setNewGradTarget("");
 });
 const handleWithdraw = () => execTx(async () => {
