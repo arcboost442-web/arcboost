@@ -499,17 +499,7 @@ export default function TokenPage() {
                   ))}
                 </div>
 
-                {/* Sell info banner */}
-                {bsMode==="sell" && !token.graduated && (
-                  <div style={{background:"#100D00",border:"1px solid rgba(251,191,36,0.2)",borderRadius:"7px",padding:"10px 12px",marginBottom:"10px",display:"flex",gap:"8px",alignItems:"flex-start"}}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" strokeWidth="2" style={{flexShrink:0,marginTop:"1px"}}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    <div style={{fontSize:"11px",color:"#92400E",lineHeight:"1.5"}}>
-                      <strong style={{color:"#FBBF24",display:"block",marginBottom:"2px"}}>Selling locks until graduation</strong>
-                      Sell your tokens only after the bonding curve reaches 100% and the token graduates to DEX.
-                    </div>
-                  </div>
-                )}
-
+               
                 {error&&<div style={{background:RED_DIM,border:"1px solid rgba(239,68,68,0.15)",borderRadius:"7px",padding:"10px 12px",color:RED,fontSize:"12px",marginBottom:"10px",lineHeight:"1.5"}}>{error}</div>}
                 {success&&<div style={{background:BLUE_DIM,border:`1px solid ${BLUE_B}`,borderRadius:"7px",padding:"10px 12px",color:CYAN,fontSize:"12px",marginBottom:"10px"}}>{success}</div>}
 
