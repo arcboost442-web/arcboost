@@ -233,12 +233,11 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
             Live on Arc Testnet
           </div>
           <h1 style={{ fontSize: "48px", fontWeight: 800, lineHeight: 1.1, color: TEXT, margin: "0 0 12px", letterSpacing: "-1.5px" }}>
-            The permissionless<br />
-            <span style={{ background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>token launchpad</span>
-          </h1>
+  Launch your token.<br />
+  <span style={{ background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Own the curve.</span>
+</h1>
           <p style={{ color: SUB, fontSize: "15px", maxWidth: "480px", margin: "0 auto 28px", lineHeight: "1.65" }}>
-            Deploy tokens instantly on Arc. Trade on bonding curves. Graduate to DEX automatically when market cap is reached.
-          </p>
+No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding curve, and graduate to DEX when the market decides.          </p>
           <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
             <Link href="/create">
               <button style={{ background: GRAD, color: "#fff", border: "none", borderRadius: "10px", padding: "13px 28px", fontSize: "14px", fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 32px rgba(37,99,235,0.4)", fontFamily: "inherit" }}>
