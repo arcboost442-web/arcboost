@@ -36,7 +36,7 @@ const TASKS = [
     title: "Like the launch post",
     desc: "Find and like the pinned announcement post.",
     action: "Open post",
-    url: "https://x.com/BOOSTARCC/status/2094723528461304120/status/2094723528461304120",
+    url: "https://x.com/BOOSTARCC/status/2094723528461304120/status/2094723528461304120/status/2094723528461304120",
     cta: "I liked it",
   },
   {
@@ -44,15 +44,16 @@ const TASKS = [
     title: "Repost it",
     desc: "Repost the announcement to your followers.",
     action: "Open post",
-    url: "https://x.com/BOOSTARCC/status/2094723528461304120/status/2094723528461304120",
+    url: "https://x.com/BOOSTARCC/status/2094723528461304120/status/2094723528461304120/status/2094723528461304120",
     cta: "I reposted",
   },
   {
     id: 4,
-    title: 'Comment "ArcBoost"',
+    title: 'Comment "Don’t fade the BOOST ⚡️
+#arcBOOST #arc"',
     desc: 'Leave a comment saying "ArcBoost" on the post.',
     action: "Open post",
-    url: "https://x.com/BOOSTARCC/status/2094723528461304120/status/2094723528461304120",
+    url: "https://x.com/BOOSTARCC/status/2094723528461304120/status/2094723528461304120/status/2094723528461304120",
     cta: "I commented",
   },
   {
