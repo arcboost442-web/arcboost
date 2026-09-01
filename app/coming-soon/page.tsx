@@ -135,6 +135,7 @@ export default function ComingSoon() {
 
   setSubmitting(true);
   setError("");
+    const supabase = getSupabase();
 
   try {
     const { error: dbError } = await supabase
