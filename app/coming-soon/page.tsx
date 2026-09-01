@@ -49,8 +49,7 @@ const TASKS = [
   },
   {
     id: 4,
-    title: 'Comment "Don’t fade the BOOST ⚡️
-#arcBOOST #arc"',
+    title: 'Comment "Don’t fade the BOOST ⚡️#arcBOOST #arc"',
     desc: 'Leave a comment saying "ArcBoost" on the post.',
     action: "Open post",
     url: "https://x.com/BOOSTARCC/status/2094723528461304120/status/2094723528461304120/status/2094723528461304120",
