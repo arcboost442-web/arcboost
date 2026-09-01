@@ -25,10 +25,10 @@ const LAUNCH_DATE = new Date("2026-09-16T00:00:00Z");
 const TASKS = [
   {
     id: 1,
-    title: "Follow @ArcBoostApp",
+    title: "Follow @BOOSTARCC",
     desc: "Follow the official ArcBoost account on X.",
     action: "Open profile",
-    url: "https://x.com/ArcBoostApp",
+    url: "https://x.com/BOOSTARCC",
     cta: "I followed",
   },
   {
@@ -36,7 +36,7 @@ const TASKS = [
     title: "Like the launch post",
     desc: "Find and like the pinned announcement post.",
     action: "Open post",
-    url: "https://x.com/ArcBoostApp",
+    url: "https://x.com/BOOSTARCC/status/2094723528461304120",
     cta: "I liked it",
   },
   {
@@ -44,7 +44,7 @@ const TASKS = [
     title: "Repost it",
     desc: "Repost the announcement to your followers.",
     action: "Open post",
-    url: "https://x.com/ArcBoostApp",
+    url: "https://x.com/BOOSTARCC/status/2094723528461304120",
     cta: "I reposted",
   },
   {
@@ -52,7 +52,7 @@ const TASKS = [
     title: 'Comment "ArcBoost"',
     desc: 'Leave a comment saying "ArcBoost" on the post.',
     action: "Open post",
-    url: "https://x.com/ArcBoostApp",
+    url: "https://x.com/BOOSTARCC/status/2094723528461304120",
     cta: "I commented",
   },
   {
@@ -357,9 +357,9 @@ export default function ComingSoon() {
         <div style={{ marginTop: "32px", textAlign: "center" }}>
           <div style={{ fontSize: "13px", fontWeight: 700, background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: "8px" }}>ArcBoost</div>
           <div style={{ fontSize: "11px", color: DIM }}>Permissionless token launchpad on Arc · Launching 16 Sep 2026</div>
-          <a href="https://x.com/ArcBoostApp" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "5px", marginTop: "12px", fontSize: "11px", color: SUB, textDecoration: "none" }}>
+          <a href="https://x.com/BOOSTARCC" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "5px", marginTop: "12px", fontSize: "11px", color: SUB, textDecoration: "none" }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.402 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.906-5.63z"/></svg>
-            @ArcBoostApp
+            @BOOSTARCC
           </a>
         </div>
 
