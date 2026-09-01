@@ -1,5 +1,5 @@
 "use client";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { useState, useEffect } from "react";
 
 const BG     = "#08090F";
