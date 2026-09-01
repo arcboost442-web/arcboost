@@ -1,5 +1,5 @@
 "use client";
-
+import { supabase } from "../lib/supabase";
 import { useState, useEffect } from "react";
 
 const BG     = "#08090F";
@@ -129,35 +129,46 @@ export default function ComingSoon() {
   };
 
   const handleSubmit = async () => {
-    if (!handle.trim()) return setError("Please enter your X handle.");
-    if (!wallet.trim()) return setError("Please enter your Arc wallet address.");
-    if (!wallet.startsWith("0x") || wallet.length !== 42) return setError("Invalid wallet address. Must start with 0x and be 42 characters.");
+  if (!handle.trim()) return setError("Please enter your X handle.");
+  if (!wallet.trim()) return setError("Please enter your Arc wallet address.");
+  if (!wallet.startsWith("0x") || wallet.length !== 42) return setError("Invalid wallet address. Must start with 0x and be 42 characters.");
 
-    setSubmitting(true);
-    setError("");
+  setSubmitting(true);
+  setError("");
 
-    try {
-      // Simpan ke localStorage sebagai bukti
-      const entry = {
-        handle: handle.trim().replace("@",""),
-        wallet: wallet.trim(),
-        timestamp: new Date().toISOString(),
-      };
-      localStorage.setItem("arcboost_waitlist_entry", JSON.stringify(entry));
+  try {
+    const { error: dbError } = await supabase
+      .from("waitlist")
+      .insert([{
+        handle: handle.trim().replace("@", "").toLowerCase(),
+        wallet: wallet.trim().toLowerCase(),
+      }]);
 
-      // Simulasi submit (ganti dengan API call ke backend/Supabase nanti)
-      await new Promise(r => setTimeout(r, 1500));
-
-      const newCompleted = [...completedTasks, 5];
-      setCompletedTasks(newCompleted);
-      setSubmitted(true);
-      saveProgress(newCompleted, 6, true);
-    } catch {
-      setError("Something went wrong. Try again.");
-    } finally {
-      setSubmitting(false);
+    if (dbError) {
+      if (dbError.code === "23505") {
+        return setError("This wallet address is already on the waitlist.");
+      }
+      throw dbError;
     }
-  };
+
+    // Simpan juga ke localStorage sebagai backup
+    localStorage.setItem("arcboost_waitlist_entry", JSON.stringify({
+      handle: handle.trim(),
+      wallet: wallet.trim(),
+      timestamp: new Date().toISOString(),
+    }));
+
+    const newCompleted = [...completedTasks, 5];
+    setCompletedTasks(newCompleted);
+    setSubmitted(true);
+    saveProgress(newCompleted, 6, true);
+
+  } catch (err: any) {
+    setError(err.message || "Something went wrong. Try again.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
