@@ -75,7 +75,7 @@ export default function TokenPage() {
   const [token, setToken]         = useState<any>(null);
   const [loading, setLoading]     = useState(true);
   const [bsMode, setBsMode]       = useState<"buy"|"sell">("buy");
-  const [buyAmt, setBuyAmt]       = useState("0.1");
+  const [buyAmt, setBuyAmt] = useState("1");
   const [sellAmt, setSellAmt]     = useState("1000");
   const [txLoading, setTxLoading] = useState(false);
   const [error, setError]         = useState("");
@@ -475,7 +475,7 @@ export default function TokenPage() {
                 {/* Preset amounts for buy */}
                 {bsMode==="buy" && (
                   <div style={{display:"flex",gap:"6px",marginBottom:"10px"}}>
-                    {["0.01","0.1","0.5","1.0"].map(p=>(
+                    {["1","10","50","100"].map(p=>(
                       <button key={p} onClick={()=>setBuyAmt(p)}
                         style={{flex:1,background:buyAmt===p?BLUE_DIM:BG,border:`1px solid ${buyAmt===p?BLUE_B:BORDER2}`,borderRadius:"6px",padding:"6px 0",fontSize:"11px",color:buyAmt===p?BLUE_LT:DIM,cursor:"pointer",fontFamily:"inherit",fontWeight:buyAmt===p?600:400,transition:"all .15s"}}>
                         {p}
