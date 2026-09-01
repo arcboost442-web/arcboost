@@ -158,11 +158,13 @@ export default function TokenPage() {
   try {
     const latest = await publicClient.getBlockNumber();
     const from = latest > BigInt(500) ? latest - BigInt(500) : BigInt(0);
-    const [bl,sl] = await Promise.all([
-      publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
-      publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
-    ]);
-    setTxs([
+          const [bl,sl] = await Promise.all([
+        publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
+        publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
+      ]);
+      console.log("Buy logs raw:", bl.map(l => l.args));
+      console.log("Sell logs raw:", sl.map(l => l.args));
+      setTxs([
       ...bl.map(l=>({type:"BUY" as const, amount:Number(formatEther(l.args.ethIn||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensOut||BigInt(0))).toFixed(0), addr:`${l.args.buyer?.slice(0,6)}...${l.args.buyer?.slice(-4)}`})),
       ...sl.map(l=>({type:"SELL" as const, amount:Number(formatEther(l.args.ethOut||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensIn||BigInt(0))).toFixed(0), addr:`${l.args.seller?.slice(0,6)}...${l.args.seller?.slice(-4)}`})),
     ].reverse());
