@@ -99,7 +99,7 @@ export default function TokenPage() {
 
   const loadToken = async () => {
     try {
-      const [name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website,decimals] = await Promise.all([
+      const [name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website] = await Promise.all([
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "name" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "symbol" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "description" }),
@@ -111,10 +111,8 @@ export default function TokenPage() {
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "twitter" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "telegram" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "website" }),
-        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "decimals" }),
       ]);
-      console.log("Token decimals:", decimals);
-            const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website,decimals};
+            const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website};
       setToken(tokenData);
       if (address) {
         const bal = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [address] });
