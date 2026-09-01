@@ -155,19 +155,21 @@ export default function TokenPage() {
   };
 
   const loadTxs = async () => {
-    try {
-      const latest = await publicClient.getBlockNumber();
-      const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);
-      const [bl,sl] = await Promise.all([
-        publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
-        publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
-      ]);
-      setTxs([
-        ...bl.map(l=>({type:"BUY" as const, amount:Number(formatEther(l.args.ethIn||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensOut||BigInt(0))).toFixed(0), addr:`${l.args.buyer?.slice(0,6)}...${l.args.buyer?.slice(-4)}`})),
-        ...sl.map(l=>({type:"SELL" as const, amount:Number(formatEther(l.args.ethOut||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensIn||BigInt(0))).toFixed(0), addr:`${l.args.seller?.slice(0,6)}...${l.args.seller?.slice(-4)}`})),
-      ].reverse());
-    } catch{}
-  };
+  try {
+    const latest = await publicClient.getBlockNumber();
+    const from = latest > BigInt(50000) ? latest - BigInt(50000) : BigInt(0);
+    const [bl,sl] = await Promise.all([
+      publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
+      publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
+    ]);
+    setTxs([
+      ...bl.map(l=>({type:"BUY" as const, amount:Number(formatEther(l.args.ethIn||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensOut||BigInt(0))).toFixed(0), addr:`${l.args.buyer?.slice(0,6)}...${l.args.buyer?.slice(-4)}`})),
+      ...sl.map(l=>({type:"SELL" as const, amount:Number(formatEther(l.args.ethOut||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensIn||BigInt(0))).toFixed(0), addr:`${l.args.seller?.slice(0,6)}...${l.args.seller?.slice(-4)}`})),
+    ].reverse());
+  } catch(e) {
+    console.error("loadTxs failed:", e);   // ← tampilkan error asli di console
+  }
+};
 
   const exec = async (fn: () => Promise<void>) => {
     if (!isConnected) return setError("Connect wallet first.");
@@ -182,42 +184,45 @@ export default function TokenPage() {
         const totSup = Number(formatEther(updatedToken.totalSupply));
         savePricePoint(ethC, totSup);
         loadChartData(updatedToken);
-        // Simpan transaksi setelah dapat data terbaru
-      if (txType && txAmount && txTokens) {
-        saveTx(txType, txAmount, txTokens);
-        loadTxs();
       }
-    
-      }
-      
+      loadTxs();
     } catch(err:any){ setError(err.message?.slice(0,120)||"Transaction failed."); }
     finally{ setTxLoading(false); }
   };
 
   // FIX: handleBuy pakai functionName "buy"
-  const handleBuy = () => {
-  const estimatedTokens = (Number(buyAmt)/(price||0.000001)).toFixed(0);
-  exec(async () => {
+  const handleBuy = () => exec(async () => {
     const {createWalletClient, custom} = await import("viem");
-    const wc = createWalletClient({chain: arcTestnet, transport: custom(window.ethereum)});
-    await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "buy", value: parseEther(buyAmt), account: address!});
+    const wc = createWalletClient({chain: arcTestnet, transport: custom((window as any).ethereum)});
+    await wc.writeContract({
+      address: tokenAddress,
+      abi: TOKEN_ABI,
+      functionName: "buy",
+      value: parseEther(buyAmt),
+      account: address!,
+    });
     setSuccess(`Order filled — ${buyAmt} USDC spent.`);
-  }, "BUY", buyAmt, estimatedTokens);
-};
+  });
 
-const handleSell = () => {
-  if (!token.graduated) {
-    setError("Selling is only available after the token graduates (bonding curve reaches 100%).");
-    return;
-  }
-  const estimatedUsdc = (Number(sellAmt)*price).toFixed(4);
-  exec(async () => {
-    const {createWalletClient, custom} = await import("viem");
-    const wc = createWalletClient({chain: arcTestnet, transport: custom(window.ethereum)});
-    await wc.writeContract({address: tokenAddress, abi: TOKEN_ABI, functionName: "sell", args: [parseEther(sellAmt)], account: address!});
-    setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
-  }, "SELL", estimatedUsdc, sellAmt);
-};
+  // FIX: handleSell — aktif tapi kasih error kalau belum graduated
+  const handleSell = () => {
+    if (!token.graduated) {
+      setError("Selling is only available after the token graduates to DEX (bonding curve reaches 100%).");
+      return;
+    }
+    exec(async () => {
+      const {createWalletClient, custom} = await import("viem");
+      const wc = createWalletClient({chain: arcTestnet, transport: custom((window as any).ethereum)});
+      await wc.writeContract({
+        address: tokenAddress,
+        abi: TOKEN_ABI,
+        functionName: "sell",
+        args: [parseEther(sellAmt)],
+        account: address!,
+      });
+      setSuccess(`Order filled — ${sellAmt} ${token?.symbol} sold.`);
+    });
+  };
 
   if (loading) return (
     <div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui"}}>
