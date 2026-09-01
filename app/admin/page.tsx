@@ -19,7 +19,7 @@ const publicClient = createPublicClient({
   transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
 });
 
-const FACTORY_ADDRESS = "0xB63C04aE033C2D27B43DFE32D351c482A227Ea6d" as const;
+const FACTORY_ADDRESS = "0xe14e152E67252CD98EE153a5c1DE8E90997aE802" as const;
 const OWNER_ADDRESS   = "0xF113960dDaBA8F45014Ef43177b1DC27f1f4E78a" as `0x${string}`;
 
 const FACTORY_ABI = [
