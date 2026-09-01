@@ -22,6 +22,7 @@ const publicClient = createPublicClient({
 });
 
 const TOKEN_ABI = [
+    { name: "decimals", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint8" }] },
   { name: "twitter", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
   { name: "telegram", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
   { name: "website", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
@@ -98,7 +99,7 @@ export default function TokenPage() {
 
   const loadToken = async () => {
     try {
-      const [name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website] = await Promise.all([
+      const [name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website,decimals] = await Promise.all([
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "name" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "symbol" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "description" }),
@@ -110,8 +111,10 @@ export default function TokenPage() {
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "twitter" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "telegram" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "website" }),
+        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "decimals" }),
       ]);
-      const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website};
+      console.log("Token decimals:", decimals);
+            const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website,decimals};
       setToken(tokenData);
       if (address) {
         const bal = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [address] });
