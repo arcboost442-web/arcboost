@@ -34,6 +34,7 @@ const TOKEN_ABI = [
   { name: "totalSupply", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "ethCollected", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "graduated", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "bool" }] },
+  { name: "deployBlock", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [{ type: "uint256" }] },
   { name: "buy", type: "function", stateMutability: "payable", inputs: [], outputs: [] },
   { name: "sell", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenAmount", type: "uint256" }], outputs: [] },
@@ -84,14 +85,19 @@ export default function TokenPage() {
   const [myBalance, setMyBal]     = useState("0");
   const [chartData, setChart]     = useState<{time:number;value:number}[]>([]);
   const [txs, setTxs]             = useState<TxItem[]>([]);
+  const [holders, setHolders]     = useState<{addr:string; balance:string; pct:string}[]>([]);
+  const [holdersLoading, setHoldersLoading] = useState(false);
   const [slippage, setSlippage]   = useState("1%");
   const [timeframe, setTimeframe] = useState("ALL");
   const [copied, setCopied]       = useState(false);
 
-  useEffect(() => {
+    useEffect(() => {
     const init = async () => {
       const tokenData = await loadToken();
-      if (tokenData) loadChartData(tokenData);
+      if (tokenData) {
+        loadChartData(tokenData);
+        loadHolders(tokenData);
+      }
       loadTxs();
     };
     init();
@@ -173,6 +179,52 @@ export default function TokenPage() {
     console.error("loadTxs failed:", e);   // ← tampilkan error asli di console
   }
 };
+  const loadHolders = async (tokenData: any) => {
+    setHoldersLoading(true);
+    try {
+      const deployBlock: bigint = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "deployBlock" }) as bigint;
+      const latest = await publicClient.getBlockNumber();
+      const CHUNK = BigInt(500);
+      const addrSet = new Set<string>();
+
+      let from = deployBlock;
+      while (from <= latest) {
+        const to = from + CHUNK > latest ? latest : from + CHUNK;
+        const [buyLogs, sellLogs] = await Promise.all([
+          publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:to}),
+          publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:to}),
+        ]);
+        buyLogs.forEach(l => { if (l.args.buyer) addrSet.add(l.args.buyer); });
+        sellLogs.forEach(l => { if (l.args.seller) addrSet.add(l.args.seller); });
+        from = to + BigInt(1);
+      }
+
+      const addrs = Array.from(addrSet);
+      const balances = await Promise.all(
+        addrs.map(a => publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [a as `0x${string}`] }))
+      );
+
+      const totSup = Number(formatEther(tokenData.totalSupply));
+      const list = addrs
+        .map((addr, i) => ({
+          addr,
+          balance: Number(formatEther(balances[i] as bigint)),
+        }))
+        .filter(h => h.balance > 0)
+        .sort((a, b) => b.balance - a.balance)
+        .map(h => ({
+          addr: `${h.addr.slice(0,6)}...${h.addr.slice(-4)}`,
+          balance: h.balance.toLocaleString(undefined, {maximumFractionDigits:0}),
+          pct: totSup > 0 ? `${((h.balance / totSup) * 100).toFixed(2)}%` : "0%",
+        }));
+
+      setHolders(list);
+    } catch(e) {
+      console.error("loadHolders failed:", e);
+    } finally {
+      setHoldersLoading(false);
+    }
+  };
 
   const exec = async (fn: () => Promise<void>) => {
     if (!isConnected) return setError("Connect wallet first.");
@@ -188,7 +240,8 @@ export default function TokenPage() {
         savePricePoint(ethC, totSup);
         loadChartData(updatedToken);
       }
-      loadTxs();
+            loadTxs();
+      if (updatedToken) loadHolders(updatedToken);
     } catch(err:any){ setError(err.message?.slice(0,120)||"Transaction failed."); }
     finally{ setTxLoading(false); }
   };
@@ -441,6 +494,41 @@ export default function TokenPage() {
               </div>
             </div>
           </div>
+
+                      {/* HOLDERS */}
+            <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:"12px",overflow:"hidden",marginTop:"14px"}}>
+              <div style={{padding:"12px 16px",borderBottom:`1px solid ${BORDER}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <span style={{fontSize:"12px",fontWeight:600,color:TEXT}}>Holders {holders.length > 0 && `(${holders.length})`}</span>
+                <button onClick={() => token && loadHolders(token)} style={{background:"none",border:"none",color:DIM,cursor:"pointer",fontSize:"11px",display:"flex",alignItems:"center",gap:"4px",fontFamily:"inherit"}}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                  Refresh
+                </button>
+              </div>
+              <div style={{padding:"16px"}}>
+                <table style={{width:"100%",fontSize:"12px",borderCollapse:"collapse"}}>
+                  <thead>
+                    <tr>{["Rank","Address","Balance","% Supply"].map(h=>(
+                      <th key={h} style={{color:DIM,textAlign:"left",padding:"6px 8px",borderBottom:`1px solid ${BORDER}`,fontWeight:500,fontSize:"10px",textTransform:"uppercase",letterSpacing:".05em"}}>{h}</th>
+                    ))}</tr>
+                  </thead>
+                  <tbody>
+                    {holdersLoading
+                      ? <tr><td colSpan={4} style={{padding:"24px 8px",color:DIM,textAlign:"center",fontSize:"12px"}}>Loading holders...</td></tr>
+                      : holders.length===0
+                        ? <tr><td colSpan={4} style={{padding:"24px 8px",color:DIM,textAlign:"center",fontSize:"12px"}}>No holders yet.</td></tr>
+                        : holders.map((h,i)=>(
+                          <tr key={i} style={{borderBottom:`1px solid ${BORDER}`}}>
+                            <td style={{padding:"10px 8px",color:DIM}}>#{i+1}</td>
+                            <td style={{padding:"10px 8px",color:DIM,fontFamily:"monospace",fontSize:"11px"}}>{h.addr}</td>
+                            <td style={{padding:"10px 8px",color:SUB}}>{h.balance}</td>
+                            <td style={{padding:"10px 8px",color:BLUE_LT,fontWeight:500}}>{h.pct}</td>
+                          </tr>
+                        ))
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
           {/* RIGHT */}
           <div style={{position:"sticky",top:"64px",display:"flex",flexDirection:"column",gap:"12px"}}>
