@@ -163,20 +163,54 @@ export default function TokenPage() {
 
   const loadTxs = async () => {
   try {
-    const latest = await publicClient.getBlockNumber();
-    const from = latest > BigInt(500) ? latest - BigInt(500) : BigInt(0);
-          const [bl,sl] = await Promise.all([
-        publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
-        publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:latest}),
-      ]);
-      console.log("Buy logs raw:", bl.map(l => l.args));
-      console.log("Sell logs raw:", sl.map(l => l.args));
-      setTxs([
-      ...bl.map(l=>({type:"BUY" as const, amount:Number(formatEther(l.args.ethIn||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensOut||BigInt(0))).toFixed(0), addr:`${l.args.buyer?.slice(0,6)}...${l.args.buyer?.slice(-4)}`})),
-      ...sl.map(l=>({type:"SELL" as const, amount:Number(formatEther(l.args.ethOut||BigInt(0))).toFixed(4), tokens:Number(formatEther(l.args.tokensIn||BigInt(0))).toFixed(0), addr:`${l.args.seller?.slice(0,6)}...${l.args.seller?.slice(-4)}`})),
-    ].reverse());
-  } catch(e) {
-    console.error("loadTxs failed:", e);   // ← tampilkan error asli di console
+    const res = await fetch(
+      `https://testnet.arcscan.app/api/v2/addresses/${tokenAddress}/logs`
+    );
+    if (!res.ok) throw new Error("Arcscan API error");
+    const data = await res.json();
+    const items = data.items || [];
+
+    // Filter hanya event Buy dan Sell
+    const BUY_TOPIC  = "0x1cbc5ab135991bd2b6a4b034a04aa2aa086dac1371cb9b16b8b5e2ed6b036bed";
+    const SELL_TOPIC = "0xed7a144fad14804d5c249145e3e0e2b63a9eb455b76aee5bc92d711e9bba3e4a";
+
+    const parsed: TxItem[] = items
+      .filter((item: any) => item.topics?.[0] === BUY_TOPIC || item.topics?.[0] === SELL_TOPIC)
+      .map((item: any) => {
+        const isBuy = item.topics?.[0] === BUY_TOPIC;
+        const params = item.decoded?.parameters || [];
+
+        // eth value — parameter ke-2 (index 1, non-indexed)
+        const ethRaw = params.find((p: any) => p.name === "eth")?.value || "0";
+        // token value — parameter ke-3 (index 2, non-indexed)
+        const tokenRaw = params.find((p: any) => p.name === "token")?.value || "0";
+        // sender address — dari topics[1]
+        const senderHex = item.topics?.[1] || "0x000000000000000000000000000000000000000000000000000000000000000000";
+        const senderAddr = "0x" + senderHex.slice(-40);
+        const addr = `${senderAddr.slice(0, 6)}...${senderAddr.slice(-4)}`;
+
+        // Convert dari wei (18 decimals) ke USDC
+        const ethUsdc = (Number(ethRaw) / 1e18).toFixed(4);
+        // Token pakai 18 decimals juga
+        const tokenAmt = Math.floor(Number(tokenRaw) / 1e18).toLocaleString();
+
+        return {
+          type: isBuy ? "BUY" as const : "SELL" as const,
+          amount: ethUsdc,
+          tokens: tokenAmt,
+          addr,
+        };
+      });
+
+    setTxs(parsed);
+  } catch (e) {
+    console.error("Arcscan loadTxs error:", e);
+    // Fallback ke localStorage
+    try {
+      const key = `txs_${tokenAddress}`;
+      const localTxs = JSON.parse(localStorage.getItem(key) || "[]");
+      setTxs(localTxs);
+    } catch {}
   }
 };
   const loadHolders = async (tokenData: any) => {
