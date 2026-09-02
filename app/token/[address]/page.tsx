@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { createPublicClient, http, parseEther, formatEther, defineChain } from "viem";
+import { createPublicClient, http, parseEther, formatEther, defineChain, getAddress } from "viem";
 import { useAccount } from "wagmi";
 import dynamic from "next/dynamic";
 
@@ -71,7 +71,7 @@ export default function TokenPage() {
   const params = useParams();
   const router = useRouter();
   const { address, isConnected } = useAccount();
-  const tokenAddress = params.address as `0x${string}`;
+  const tokenAddress = getAddress(params.address as string) as `0x${string}`;
 
   const [token, setToken]         = useState<any>(null);
   const [loading, setLoading]     = useState(true);
@@ -112,7 +112,7 @@ export default function TokenPage() {
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "telegram" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "website" }),
       ]);
-            const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website};
+      const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website};
       setToken(tokenData);
       if (address) {
         const bal = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [address] });
@@ -193,32 +193,19 @@ export default function TokenPage() {
     finally{ setTxLoading(false); }
   };
 
+  // FIX: handleBuy pakai functionName "buy"
   const handleBuy = () => exec(async () => {
-  const {createWalletClient, custom} = await import("viem");
-  const wc = createWalletClient({chain: arcTestnet, transport: custom((window as any).ethereum)});
-  await wc.writeContract({
-    address: tokenAddress,
-    abi: TOKEN_ABI,
-    functionName: "buy",
-    value: parseEther(buyAmt),
-    account: address!,
+    const {createWalletClient, custom} = await import("viem");
+    const wc = createWalletClient({chain: arcTestnet, transport: custom((window as any).ethereum)});
+    await wc.writeContract({
+      address: tokenAddress,
+      abi: TOKEN_ABI,
+      functionName: "buy",
+      value: parseEther(buyAmt),
+      account: address!,
+    });
+    setSuccess(`Order filled — ${buyAmt} USDC spent.`);
   });
-
-  // Simpan tx ke localStorage
-  const key = `txs_${tokenAddress}`;
-  const existing = JSON.parse(localStorage.getItem(key) || "[]");
-  existing.unshift({
-    type: "BUY",
-    amount: Number(buyAmt).toFixed(4),
-    tokens: Math.floor(Number(buyAmt) / (price || 0.000001)).toString(),
-    addr: address ? `${address.slice(0,6)}...${address.slice(-4)}` : "unknown",
-    time: new Date().toLocaleTimeString(),
-  });
-  if (existing.length > 50) existing.pop();
-  localStorage.setItem(key, JSON.stringify(existing));
-
-  setSuccess(`Order filled — ${buyAmt} USDC spent.`);
-});
 
   // FIX: handleSell — aktif tapi kasih error kalau belum graduated
   const handleSell = () => {
