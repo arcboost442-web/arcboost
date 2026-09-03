@@ -217,37 +217,21 @@ export default function TokenPage() {
   const loadHolders = async (tokenData: any) => {
     setHoldersLoading(true);
     try {
-      const deployBlock: bigint = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "deployBlock" }) as bigint;
-      const latest = await publicClient.getBlockNumber();
-      const CHUNK = BigInt(500);
-      const addrSet = new Set<string>();
-
-      let from = deployBlock;
-      while (from <= latest) {
-        const to = from + CHUNK > latest ? latest : from + CHUNK;
-        const [buyLogs, sellLogs] = await Promise.all([
-          publicClient.getLogs({address:tokenAddress,event:{name:"Buy",type:"event",inputs:[{name:"buyer",type:"address",indexed:true},{name:"ethIn",type:"uint256",indexed:false},{name:"tokensOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:to}),
-          publicClient.getLogs({address:tokenAddress,event:{name:"Sell",type:"event",inputs:[{name:"seller",type:"address",indexed:true},{name:"tokensIn",type:"uint256",indexed:false},{name:"ethOut",type:"uint256",indexed:false}]},fromBlock:from,toBlock:to}),
-        ]);
-        buyLogs.forEach(l => { if (l.args.buyer) addrSet.add(l.args.buyer); });
-        sellLogs.forEach(l => { if (l.args.seller) addrSet.add(l.args.seller); });
-        from = to + BigInt(1);
-      }
-
-      const addrs = Array.from(addrSet);
-      const balances = await Promise.all(
-        addrs.map(a => publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [a as `0x${string}`] }))
-      );
+      const res = await fetch(`${EXPLORER_API_BASE}/api/v2/tokens/${tokenAddress}/holders`);
+      if (!res.ok) throw new Error(`Holders API returned ${res.status}`);
+      const data = await res.json();
 
       const totSup = Number(formatEther(tokenData.totalSupply));
-      const list = addrs
-        .map((addr, i) => ({
-          addr,
-          balance: Number(formatEther(balances[i] as bigint)),
-        }))
-        .filter(h => h.balance > 0)
-        .sort((a, b) => b.balance - a.balance)
-        .map(h => ({
+      const list = (data.items || [])
+        .map((item: any) => {
+          const balanceRaw = BigInt(item.value);
+          const balance = Number(formatEther(balanceRaw));
+          const addr = item.address.hash;
+          return { addr, balance };
+        })
+        .filter((h: any) => h.balance > 0)
+        .sort((a: any, b: any) => b.balance - a.balance)
+        .map((h: any) => ({
           addr: `${h.addr.slice(0,6)}...${h.addr.slice(-4)}`,
           balance: h.balance.toLocaleString(undefined, {maximumFractionDigits:0}),
           pct: totSup > 0 ? `${((h.balance / totSup) * 100).toFixed(2)}%` : "0%",
