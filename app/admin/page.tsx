@@ -19,7 +19,7 @@ const publicClient = createPublicClient({
   transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
 });
 
-const FACTORY_ADDRESS = "0xB2Fd17392A283B1E5a6715d7a87C25589b86DCe6" as const;
+const FACTORY_ADDRESS = "0x9F175C4E4008B60974746769e40458626727A685" as const;
 const OWNER_ADDRESS   = "0xF113960dDaBA8F45014Ef43177b1DC27f1f4E78a" as `0x${string}`;
 
 const FACTORY_ABI = [
@@ -35,6 +35,7 @@ const FACTORY_ABI = [
 
 const TOKEN_ABI = [
     { name: "withdrawFunds", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] },
+  { name: "emergencyWithdraw", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] },
   { name: "ethCollected", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "graduated",    type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "bool"    }] },
 ] as const;
@@ -74,6 +75,7 @@ export default function AdminPage() {
   const [totalVolume, setTotalVolume] = useState(0);
   const [graduatedCount, setGraduatedCount] = useState(0);
   const [graduatedWithFunds, setGraduatedWithFunds] = useState(0); // ← tambah di sini
+  const [activeWithFunds, setActiveWithFunds] = useState(0);
 
   // Form state
   const [newTreasury, setNewTreasury] = useState("");
@@ -114,6 +116,7 @@ export default function AdminPage() {
 
       // Hitung total volume & graduated
       let vol = 0, grad = 0;
+      setActiveWithFunds(0);
       await Promise.all(addrs.map(async (addr) => {
         try {
           const [eth, graduated] = await Promise.all([
@@ -125,6 +128,8 @@ export default function AdminPage() {
   grad++;
   const bal = await publicClient.getBalance({ address: addr });
   if (bal > BigInt(0)) setGraduatedWithFunds(prev => prev + 1);
+} else {
+  if ((eth as bigint) > BigInt(0)) setActiveWithFunds(prev => prev + 1);
 }
         } catch {}
       }));
@@ -231,6 +236,26 @@ const handleWithdraw = () => execTx(async () => {
     } catch {}
   }
   if (withdrawn === 0) throw new Error("No graduated tokens with funds to withdraw.");
+});
+
+const handleEmergencyWithdraw = () => execTx(async () => {
+  const { createWalletClient, custom } = await import("viem");
+  const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
+  const addrs = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" });
+  let withdrawn = 0;
+  for (const addr of addrs) {
+    try {
+      const graduated = await publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "graduated" });
+      if (!graduated) {
+        const eth = await publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "ethCollected" });
+        if ((eth as bigint) > BigInt(0)) {
+          await wc.writeContract({ address: addr, abi: [{ name: "emergencyWithdraw", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] }], functionName: "emergencyWithdraw", account: address! });
+          withdrawn++;
+        }
+      }
+    } catch {}
+  }
+  if (withdrawn === 0) throw new Error("No active tokens with funds to withdraw.");
 });
   const connectWallet = async () => {
     if (typeof window.ethereum !== "undefined") {
@@ -398,6 +423,25 @@ const handleWithdraw = () => execTx(async () => {
     style={{ width: "100%", background: graduatedWithFunds > 0 ? "linear-gradient(135deg, #065F46, #047857)" : BORDER2, color: graduatedWithFunds > 0 ? GREEN : DIM, border: `1px solid ${graduatedWithFunds > 0 ? GREEN_B : "transparent"}`, borderRadius: "8px", padding: "11px", fontSize: "13px", fontWeight: 600, cursor: graduatedWithFunds > 0 ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "all .15s", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 7l-5-5-5 5M17 17l-5 5-5-5"/></svg>
     {txLoading ? "Processing..." : "Withdraw All Graduated Funds"}
+  </button>
+</div>
+
+{/* EMERGENCY WITHDRAW */}
+<div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "18px 20px", marginBottom: "16px" }}>
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+    <div>
+      <div style={{ fontSize: "10px", fontWeight: 600, color: DIM, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: "4px" }}>Emergency Withdraw</div>
+      <div style={{ fontSize: "12px", color: SUB }}>Tarik dana dari token yang BELUM mencapai grad target. Refund ke buyer harus dilakukan manual.</div>
+    </div>
+    <div style={{ background: "#3A1D0A", border: "1px solid rgba(251,146,60,0.2)", borderRadius: "8px", padding: "8px 14px", textAlign: "center", flexShrink: 0 }}>
+      <div style={{ fontSize: "18px", fontWeight: 700, color: "#FB923C" }}>{loading ? "..." : activeWithFunds}</div>
+      <div style={{ fontSize: "10px", color: DIM }}>tokens active</div>
+    </div>
+  </div>
+  <button onClick={handleEmergencyWithdraw} disabled={txLoading || activeWithFunds === 0}
+    style={{ width: "100%", background: activeWithFunds > 0 ? "linear-gradient(135deg, #9A3412, #C2410C)" : BORDER2, color: activeWithFunds > 0 ? "#FDBA74" : DIM, border: `1px solid ${activeWithFunds > 0 ? "rgba(251,146,60,0.3)" : "transparent"}`, borderRadius: "8px", padding: "11px", fontSize: "13px", fontWeight: 600, cursor: activeWithFunds > 0 ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "all .15s", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+    {txLoading ? "Processing..." : "Emergency Withdraw All Active Tokens"}
   </button>
 </div>
 
