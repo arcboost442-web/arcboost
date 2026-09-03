@@ -19,7 +19,7 @@ const publicClient = createPublicClient({
   transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
 });
 
-const FACTORY_ADDRESS = "0x9F175C4E4008B60974746769e40458626727A685" as const;
+const FACTORY_ADDRESS = "0x86246eC0767bD50592D63309Ea3e5A725A41c939" as const;
 const OWNER_ADDRESS   = "0xF113960dDaBA8F45014Ef43177b1DC27f1f4E78a" as `0x${string}`;
 
 const FACTORY_ABI = [
@@ -31,6 +31,9 @@ const FACTORY_ABI = [
   { name: "setDeployFee",   type: "function", stateMutability: "nonpayable", inputs: [{ name: "newFee",      type: "uint256" }],   outputs: [] },
   { name: "setTreasury",    type: "function", stateMutability: "nonpayable", inputs: [{ name: "newTreasury", type: "address" }],   outputs: [] },
   { name: "setTokenGradTarget", type: "function", stateMutability: "nonpayable", inputs: [{ name: "tokenAddr", type: "address" }, { name: "newTarget", type: "uint256" }], outputs: [] },
+  { name: "defaultGradTarget", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { name: "setDefaultGradTarget", type: "function", stateMutability: "nonpayable", inputs: [{ name: "newTarget", type: "uint256" }], outputs: [] },
+
 ] as const;
 
 const TOKEN_ABI = [
@@ -81,6 +84,8 @@ export default function AdminPage() {
   const [newTreasury, setNewTreasury] = useState("");
   const [newDeployFee, setNewDeployFee] = useState("");
   const [newGradTarget, setNewGradTarget] = useState("");
+  const [defaultGradTarget, setDefaultGradTargetVal] = useState("");
+const [currentDefaultGrad, setCurrentDefaultGrad] = useState("0");
   const [txLoading, setTxLoading] = useState(false);
   const [txError, setTxError] = useState("");
   const [txSuccess, setTxSuccess] = useState("");
@@ -97,18 +102,17 @@ export default function AdminPage() {
     }
   }, [mounted, isConnected, address]);
 
-  const loadStats = async () => {
-    setLoading(true);
-    try {
-      const [addrs, fee, treasury] = await Promise.all([
-        publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" }),
-        publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "deployFee" }),
-        publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "treasury" }),
-      ]);
+ const [addrs, fee, treasury, defGrad] = await Promise.all([
+  publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" }),
+  publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "deployFee" }),
+  publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "treasury" }),
+  publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "defaultGradTarget" }),
+]);
 
-      setTotalTokens(addrs.length);
-      setDeployFee(formatEther(fee));
-      setTreasuryAddress(treasury);
+setTotalTokens(addrs.length);
+setDeployFee(formatEther(fee));
+setTreasuryAddress(treasury);
+setCurrentDefaultGrad(formatEther(defGrad as bigint));
 
       // Cek balance treasury
       const balance = await publicClient.getBalance({ address: treasury as `0x${string}` });
@@ -174,6 +178,20 @@ const handleSetGradTarget = () => execTx(async () => {
   const addrs = await publicClient.readContract({
     address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens"
   });
+  const handleSetDefaultGradTarget = async () => {
+  if (!defaultGradTarget) return;
+  await execTx(async () => {
+    const { createWalletClient, custom } = await import("viem");
+    const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
+    await wc.writeContract({
+      address: FACTORY_ADDRESS,
+      abi: FACTORY_ABI,
+      functionName: "setDefaultGradTarget",
+      args: [parseEther(defaultGradTarget)],
+      account: address!,
+    });
+  }, "Default grad target updated!");
+};
 
   const newTargetWei = parseEther(newGradTarget);
   let updated = 0;
@@ -387,6 +405,23 @@ const handleEmergencyWithdraw = () => execTx(async () => {
               {txLoading ? "Submitting..." : "Update Deploy Fee"}
             </button>
           </div>
+          {/* DEFAULT GRAD TARGET */}
+<div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "18px 20px" }}>
+  <div style={{ fontSize: "10px", fontWeight: 600, color: DIM, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: "4px" }}>Default Graduation Target</div>
+  <div style={{ fontSize: "12px", color: SUB, marginBottom: "6px" }}>Target USDC untuk semua token baru yang di-deploy. Saat ini: <strong style={{ color: BLUE_LT }}>{currentDefaultGrad} USDC</strong></div>
+  <input
+    value={defaultGradTarget}
+    onChange={e => setDefaultGradTargetVal(e.target.value)}
+    placeholder="contoh: 69.0"
+    type="number"
+    step="0.1"
+    style={{ width: "100%", background: BG, border: `1px solid ${BORDER2}`, borderRadius: "8px", color: TEXT, fontSize: "13px", padding: "9px 12px", outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: "10px" }}
+  />
+  <button onClick={handleSetDefaultGradTarget} disabled={txLoading || !defaultGradTarget}
+    style={{ width: "100%", background: defaultGradTarget ? GRAD : BORDER2, color: defaultGradTarget ? "#fff" : DIM, border: "none", borderRadius: "8px", padding: "10px", fontSize: "13px", fontWeight: 600, cursor: defaultGradTarget ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "all .15s" }}>
+    {txLoading ? "Submitting..." : "Update Default Grad Target"}
+  </button>
+</div>
           {/* GANTI GRAD TARGET */}
 <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "18px 20px" }}>
   <div style={{ fontSize: "10px", fontWeight: 600, color: DIM, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: "4px" }}>Graduation Target</div>
