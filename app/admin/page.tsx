@@ -19,7 +19,7 @@ const publicClient = createPublicClient({
   transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
 });
 
-const FACTORY_ADDRESS = "0xE1b2edf7183c4D2bB2D159593d65F4507FA02B2B" as const;
+const FACTORY_ADDRESS = "0xB2Fd17392A283B1E5a6715d7a87C25589b86DCe6" as const;
 const OWNER_ADDRESS   = "0xF113960dDaBA8F45014Ef43177b1DC27f1f4E78a" as `0x${string}`;
 
 const FACTORY_ABI = [
@@ -165,37 +165,52 @@ const handleSetGradTarget = () => execTx(async () => {
   if (!newGradTarget || isNaN(Number(newGradTarget))) throw new Error("Invalid target amount.");
   const { createWalletClient, custom } = await import("viem");
   const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
-  
-  const addrs = await publicClient.readContract({ 
-    address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" 
+
+  const addrs = await publicClient.readContract({
+    address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens"
   });
-  
+
+  const newTargetWei = parseEther(newGradTarget);
   let updated = 0;
+  let skipped = 0;
+
   for (const addr of addrs) {
     try {
-      const graduated = await publicClient.readContract({ 
-        address: addr, abi: TOKEN_ABI, functionName: "graduated" 
+      const graduated = await publicClient.readContract({
+        address: addr, abi: TOKEN_ABI, functionName: "graduated"
       });
-      if (!graduated) {
-        await wc.writeContract({ 
-          address: addr,
-          abi: [{ 
-            name: "setGradTarget", 
-            type: "function", 
-            stateMutability: "nonpayable", 
-            inputs: [{ name: "newTarget", type: "uint256" }], 
-            outputs: [] 
-          }],
-          functionName: "setGradTarget", 
-          args: [parseEther(newGradTarget)], 
-          account: address! 
-        });
-        updated++;
+      if (graduated) continue;
+
+      const ethCollected = await publicClient.readContract({
+        address: addr, abi: TOKEN_ABI, functionName: "ethCollected"
+      }) as bigint;
+
+      if (newTargetWei < ethCollected) {
+        console.warn(`Skipped ${addr}: new target below ethCollected (${ethCollected})`);
+        skipped++;
+        continue;
       }
+
+      await wc.writeContract({
+        address: addr,
+        abi: [{
+          name: "setGradTarget",
+          type: "function",
+          stateMutability: "nonpayable",
+          inputs: [{ name: "newTarget", type: "uint256" }],
+          outputs: []
+        }],
+        functionName: "setGradTarget",
+        args: [newTargetWei],
+        account: address!
+      });
+      updated++;
     } catch(e) { console.error(e); }
   }
-  
-  if (updated === 0) throw new Error("No active tokens to update.");
+
+  if (updated === 0 && skipped === 0) throw new Error("No active tokens to update.");
+  if (updated === 0 && skipped > 0) throw new Error(`All ${skipped} active token(s) already collected more than the new target — raise the target higher.`);
+
   setNewGradTarget("");
 });
 const handleWithdraw = () => execTx(async () => {
