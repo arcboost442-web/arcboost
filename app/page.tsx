@@ -491,7 +491,7 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
           <div style={{ fontSize: "14px", fontWeight: 700, background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ArcBoost</div>
           <div style={{ display: "flex", gap: "20px" }}>
             {[
-  { label: "Docs", href: "https://docs.arcboost.fun" },
+  { label: "Docs",   href: "https://docs.arcboost.fun" },
   { label: "Twitter", href: "https://x.com/BOOSTARCC" },
   { label: "GitHub", href: "https://github.com/arcboost442-web/arcboost" },
 ].map(l => (
