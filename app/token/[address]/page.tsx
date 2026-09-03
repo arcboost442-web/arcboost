@@ -50,6 +50,7 @@ const TOKEN_ABI = [
   ]},
 ] as const;
 
+const EXPLORER_API_BASE = "https://testnet.arcscan.app";
 const BG      = "#08090F";
 const CARD    = "#0E1118";
 const CARD2   = "#111622";
