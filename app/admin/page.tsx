@@ -178,20 +178,18 @@ const handleSetGradTarget = () => execTx(async () => {
   const addrs = await publicClient.readContract({
     address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens"
   });
-  const handleSetDefaultGradTarget = async () => {
-  if (!defaultGradTarget) return;
-  await execTx(async () => {
-    const { createWalletClient, custom } = await import("viem");
-    const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
-    await wc.writeContract({
-      address: FACTORY_ADDRESS,
-      abi: FACTORY_ABI,
-      functionName: "setDefaultGradTarget",
-      args: [parseEther(defaultGradTarget)],
-      account: address!,
-    });
-  }, "Default grad target updated!");
-};
+  const handleSetDefaultGradTarget = () => execTx(async () => {
+  if (!defaultGradTarget || isNaN(Number(defaultGradTarget))) throw new Error("Invalid target amount.");
+  const { createWalletClient, custom } = await import("viem");
+  const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
+  await wc.writeContract({
+    address: FACTORY_ADDRESS,
+    abi: FACTORY_ABI,
+    functionName: "setDefaultGradTarget",
+    args: [parseEther(defaultGradTarget)],
+    account: address!,
+  });
+}, "Default grad target updated!");
 
   const newTargetWei = parseEther(newGradTarget);
   let updated = 0;
