@@ -503,7 +503,7 @@ export default function TokenPage() {
                             </span>
                           </td>
                           <td style={{padding:"10px 8px",color:tx.type==="BUY"?BLUE_LT:RED,fontWeight:500}}>{tx.amount} USDC</td>
-                          <td style={{padding:"10px 8px",color:SUB}}>{Number(tx.tokens).toLocaleString()}</td>
+                          <td style={{padding:"10px 8px",color:SUB}}>{tx.tokens}</td>
                           <td style={{padding:"10px 8px",color:DIM,fontFamily:"monospace",fontSize:"11px"}}>{tx.addr}</td>
                         </tr>
                       ))
