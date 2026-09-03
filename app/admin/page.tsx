@@ -379,29 +379,29 @@ const handleWithdraw = () => execTx(async () => {
     {txLoading ? "Submitting..." : "Update Grad Target"}
   </button>
 </div>
-        {/* WITHDRAW */}
-        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "18px 20px", marginBottom: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-            <div>
-              <div style={{ fontSize: "10px", fontWeight: 600, color: DIM, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: "4px" }}>Withdraw Graduated Funds</div>
-              <div style={{ fontSize: "12px", color: SUB }}>Tarik USDC dari semua token yang sudah graduated ke wallet treasury.</div>
-            </div>
-            <div style={{ background: GREEN_DIM, border: `1px solid ${GREEN_B}`, borderRadius: "8px", padding: "8px 14px", textAlign: "center", flexShrink: 0 }}>
-              <div style={{ fontSize: "18px", fontWeight: 700, color: GREEN }}>{loading ? "..." : graduatedWithFunds}</div>
-              <div style={{ fontSize: "10px", color: DIM }}>tokens ready</div>
-            </div>
-          </div>
-          <button onClick={handleWithdraw} disabled={txLoading || graduatedWithFunds === 0}
-            style={{ width: "100%", background: graduatedWithFunds > 0 ? "linear-gradient(135deg, #065F46, #047857)" : BORDER2, color: graduatedWithFunds > 0 ? GREEN : DIM, border: `1px solid ${graduatedWithFunds > 0 ? GREEN_B : "transparent"}`, borderRadius: "8px", padding: "11px", fontSize: "13px", fontWeight: 600, cursor: graduatedWithFunds > 0 ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "all .15s", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 7l-5-5-5 5M17 17l-5 5-5-5"/></svg>
-            {txLoading ? "Processing..." : "Withdraw All Graduated Funds"}
-          </button>
-        </div>
 
-        {/* TX FEEDBACK */}
-        </div>
+</div>{/* tutup grid 3 kolom */}
 
-        {/* TX FEEDBACK */}
+{/* WITHDRAW */}
+<div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "18px 20px", marginBottom: "16px" }}>
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+    <div>
+      <div style={{ fontSize: "10px", fontWeight: 600, color: DIM, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: "4px" }}>Withdraw Graduated Funds</div>
+      <div style={{ fontSize: "12px", color: SUB }}>Tarik USDC dari semua token yang sudah graduated ke wallet treasury.</div>
+    </div>
+    <div style={{ background: GREEN_DIM, border: `1px solid ${GREEN_B}`, borderRadius: "8px", padding: "8px 14px", textAlign: "center", flexShrink: 0 }}>
+      <div style={{ fontSize: "18px", fontWeight: 700, color: GREEN }}>{loading ? "..." : graduatedWithFunds}</div>
+      <div style={{ fontSize: "10px", color: DIM }}>tokens ready</div>
+    </div>
+  </div>
+  <button onClick={handleWithdraw} disabled={txLoading || graduatedWithFunds === 0}
+    style={{ width: "100%", background: graduatedWithFunds > 0 ? "linear-gradient(135deg, #065F46, #047857)" : BORDER2, color: graduatedWithFunds > 0 ? GREEN : DIM, border: `1px solid ${graduatedWithFunds > 0 ? GREEN_B : "transparent"}`, borderRadius: "8px", padding: "11px", fontSize: "13px", fontWeight: 600, cursor: graduatedWithFunds > 0 ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "all .15s", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 7l-5-5-5 5M17 17l-5 5-5-5"/></svg>
+    {txLoading ? "Processing..." : "Withdraw All Graduated Funds"}
+  </button>
+</div>
+
+{/* TX FEEDBACK */}
         {txError && (
           <div style={{ background: RED_DIM, border: "1px solid rgba(239,68,68,0.2)", borderRadius: "10px", padding: "12px 16px", color: RED, fontSize: "13px", marginBottom: "16px", display: "flex", gap: "8px", alignItems: "flex-start" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, marginTop: "1px" }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
