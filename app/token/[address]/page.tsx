@@ -459,7 +459,7 @@ export default function TokenPage() {
               <div style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:"6px",height:"8px",marginBottom:"14px",overflow:"hidden"}}>
                 <div style={{height:"8px",borderRadius:"6px",background:pct>=80?GRAD:BLUE_LT,width:`${pct}%`,transition:"width .5s ease",boxShadow:pct>0?`0 0 12px rgba(37,99,235,0.4)`:undefined}}/>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"8px"}}>
                 {[
                   {label:"Collected",value:`${ethC.toFixed(4)} USDC`},
                   {label:"Target",value:"1.0000 USDC"},
@@ -699,9 +699,9 @@ export default function TokenPage() {
               <div style={{fontSize:"10px",fontWeight:600,color:DIM,textTransform:"uppercase",letterSpacing:".07em",marginBottom:"12px"}}>Links</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"8px"}}>
                 {[
-                  { label:"Explorer", url:`https://testnet.arcscan.app/address/${tokenAddress}`, icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> },
                   { label:"Twitter", url:token.twitter||null, icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.402 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.906-5.63z"/></svg> },
                   { label:"Telegram", url:token.telegram||null, icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 5L2 12.5l7 1M21 5l-5 15-5.5-5M21 5L9 13.5"/></svg> },
+                  { label:"Website", url:token.website||null, icon:<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> },
                 ].map(l=>(
                   l.url ? (
                     <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:"none"}}>
