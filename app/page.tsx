@@ -490,9 +490,13 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
         <div style={{ borderTop: `1px solid ${BORDER}`, padding: "24px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: "14px", fontWeight: 700, background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ArcBoost</div>
           <div style={{ display: "flex", gap: "20px" }}>
-            {["Docs", "Twitter", "Discord", "GitHub"].map(l => (
-              <a key={l} href="#" style={{ fontSize: "12px", color: DIM, textDecoration: "none" }}>{l}</a>
-            ))}
+            {[
+  { label: "Docs", href: "https://docs.arcboost.fun" },
+  { label: "Twitter", href: "https://x.com/BOOSTARCC" },
+  { label: "GitHub", href: "https://github.com/arcboost442-web/arcboost" },
+].map(l => (
+  <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: DIM, textDecoration: "none" }}>{l.label}</a>
+))}
           </div>
           <div style={{ fontSize: "11px", color: DIM }}>Built on Arc · {new Date().getFullYear()}</div>
         </div>
