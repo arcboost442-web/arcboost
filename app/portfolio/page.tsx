@@ -121,7 +121,7 @@ export default function PortfolioPage() {
           const price        = totalSupply > 0 ? ethCollected / totalSupply : 0;
           const valueUsdc    = balance * price;
           const balancePct   = totalSupply > 0 ? (balance / totalSupply) * 100 : 0;
-          const isCreator    = info[5].toLowerCase() === address.toLowerCase();
+          const isCreator    = info[8].toLowerCase() === address.toLowerCase();
 
           return {
             tokenAddress: info[0],
@@ -129,7 +129,7 @@ export default function PortfolioPage() {
             symbol: info[2],
             imageURI: info[3],
             description: info[4],
-            creator: info[5],
+            creator: info[8],
             ethCollected,
             graduated: grad as boolean,
             totalSupply,
