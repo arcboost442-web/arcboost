@@ -34,6 +34,7 @@ const TOKEN_ABI = [
   { name: "totalSupply", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "ethCollected", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "graduated", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "bool" }] },
+  { name: "gradTarget", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "deployBlock", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
   { name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [{ type: "uint256" }] },
   { name: "buy", type: "function", stateMutability: "payable", inputs: [], outputs: [] },
@@ -106,7 +107,7 @@ export default function TokenPage() {
 
   const loadToken = async () => {
     try {
-      const [name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website] = await Promise.all([
+      const [name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website,gradTarget] = await Promise.all([
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "name" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "symbol" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "description" }),
@@ -118,8 +119,9 @@ export default function TokenPage() {
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "twitter" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "telegram" }),
         publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "website" }),
+        publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "gradTarget" }),
       ]);
-      const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website};
+      const tokenData = {name,symbol,description,imageURI,creator,totalSupply,ethCollected,graduated,twitter,telegram,website,gradTarget};
       setToken(tokenData);
       if (address) {
         const bal = await publicClient.readContract({ address: tokenAddress, abi: TOKEN_ABI, functionName: "balanceOf", args: [address] });
@@ -314,7 +316,8 @@ export default function TokenPage() {
   // FIX: semua kalkulasi di bawah loading check supaya token pasti ada
   const ethC   = Number(formatEther(token.ethCollected));
   const totSup = Number(formatEther(token.totalSupply));
-  const pct    = Math.min((ethC / 1) * 100, 100);
+  const gradTargetNum = Number(formatEther(token.gradTarget || BigInt(0)));
+  const pct    = gradTargetNum > 0 ? Math.min((ethC / gradTargetNum) * 100, 100) : 0;
   const price  = totSup > 0 ? ethC / totSup : 0;
   const activeAmt  = bsMode === "buy" ? buyAmt : sellAmt;
   const amtInvalid = activeAmt === "" || isNaN(Number(activeAmt)) || Number(activeAmt) <= 0;
@@ -462,8 +465,8 @@ export default function TokenPage() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"8px"}}>
                 {[
                   {label:"Collected",value:`${ethC.toFixed(4)} USDC`},
-                  {label:"Target",value:"1.0000 USDC"},
-                  {label:"Remaining",value:`${Math.max(1-ethC,0).toFixed(4)} USDC`},
+                  {label:"Target",value:`${gradTargetNum.toFixed(4)} USDC`},
+                  {label:"Remaining",value:`${Math.max(gradTargetNum-ethC,0).toFixed(4)} USDC`},
                 ].map(s=>(
                   <div key={s.label} style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:"8px",padding:"10px 12px"}}>
                     <div style={{fontSize:"10px",color:DIM,textTransform:"uppercase",letterSpacing:".05em",marginBottom:"4px"}}>{s.label}</div>
