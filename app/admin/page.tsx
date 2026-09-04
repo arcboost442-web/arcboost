@@ -19,7 +19,7 @@ const publicClient = createPublicClient({
   transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
 });
 
-const FACTORY_ADDRESS = "0x86246eC0767bD50592D63309Ea3e5A725A41c939" as const;
+const FACTORY_ADDRESS = "0x5f833C30e56b9a8161fE180a1aF31b58f966D49E" as const;
 const OWNER_ADDRESS   = "0xF113960dDaBA8F45014Ef43177b1DC27f1f4E78a" as `0x${string}`;
 
 const FACTORY_ABI = [
@@ -102,6 +102,10 @@ const [currentDefaultGrad, setCurrentDefaultGrad] = useState("0");
     }
   }, [mounted, isConnected, address]);
 
+  const loadStats = async () => {
+    setLoading(true);
+    try {
+
  const [addrs, fee, treasury, defGrad] = await Promise.all([
   publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" }),
   publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "deployFee" }),
@@ -170,15 +174,7 @@ setCurrentDefaultGrad(formatEther(defGrad as bigint));
     await wc.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setDeployFee", args: [parseEther(newDeployFee)], account: address! });
     setNewDeployFee("");
   });
-const handleSetGradTarget = () => execTx(async () => {
-  if (!newGradTarget || isNaN(Number(newGradTarget))) throw new Error("Invalid target amount.");
-  const { createWalletClient, custom } = await import("viem");
-  const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
-
-  const addrs = await publicClient.readContract({
-    address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens"
-  });
-  const handleSetDefaultGradTarget = () => execTx(async () => {
+const handleSetDefaultGradTarget = () => execTx(async () => {
   if (!defaultGradTarget || isNaN(Number(defaultGradTarget))) throw new Error("Invalid target amount.");
   const { createWalletClient, custom } = await import("viem");
   const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
@@ -189,7 +185,17 @@ const handleSetGradTarget = () => execTx(async () => {
     args: [parseEther(defaultGradTarget)],
     account: address!,
   });
-}, "Default grad target updated!");
+  setDefaultGradTargetVal("");
+});
+
+const handleSetGradTarget = () => execTx(async () => {
+  if (!newGradTarget || isNaN(Number(newGradTarget))) throw new Error("Invalid target amount.");
+  const { createWalletClient, custom } = await import("viem");
+  const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
+
+  const addrs = await publicClient.readContract({
+    address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens"
+  });
 
   const newTargetWei = parseEther(newGradTarget);
   let updated = 0;
