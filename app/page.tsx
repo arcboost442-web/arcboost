@@ -67,6 +67,7 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -75,6 +76,12 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => { setMounted(true); loadTokens(); }, []);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll);
@@ -280,7 +287,7 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
         </div>
 
         {/* STATS */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "12px", padding: "0 32px", maxWidth: "1100px", margin: "0 auto 32px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: "12px", padding: isMobile ? "0 16px" : "0 32px", maxWidth: "1100px", margin: "0 auto 32px" }}>
           {[
             { label: "Tokens Launched", value: tokens.length.toString(), sub: "On Arc Testnet" },
             { label: "Total Volume", value: `${totalVol.toFixed(3)} USDC`, sub: "All-time" },
@@ -301,7 +308,7 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
 
           {/* KING OF THE HILL */}
           {topToken && (
-            <div style={{ background: `linear-gradient(135deg, ${BLUE_DIM} 0%, #0A1A2E 100%)`, border: `1px solid ${BLUE_B}`, borderRadius: "16px", padding: "28px 32px", marginBottom: "32px", display: "flex", alignItems: "center", gap: "24px", position: "relative", overflow: "hidden" }}>
+            <div style={{ background: `linear-gradient(135deg, ${BLUE_DIM} 0%, #0A1A2E 100%)`, border: `1px solid ${BLUE_B}`, borderRadius: "16px", padding: "28px 32px", marginBottom: "32px", display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", gap: isMobile ? "16px" : "24px", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", right: 0, top: 0, width: "300px", height: "100%", background: "radial-gradient(ellipse at 100% 50%, rgba(6,182,212,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
               <div style={{ width: "60px", height: "60px", borderRadius: "14px", background: CARD, border: `1px solid ${BORDER2}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
                 {topToken.imageURI ? <img src={topToken.imageURI} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontWeight: 700, fontSize: "22px", color: BLUE_LT }}>{topToken.symbol?.slice(0, 1)}</span>}
@@ -310,7 +317,7 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
                 <div style={{ fontSize: "11px", color: BLUE_LT, textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, marginBottom: "5px" }}>Leading Market</div>
                 <div style={{ fontSize: "21px", fontWeight: 700, color: TEXT }}>{topToken.name} <span style={{ fontSize: "15px", color: BLUE_LT, fontWeight: 500 }}>{topToken.symbol}</span></div>
               </div>
-              <div style={{ display: "flex", gap: "32px" }}>
+              <div style={{ display: "flex", gap: isMobile ? "20px" : "32px", flexWrap: "wrap" }}>
                 {[
                   { label: "Volume", value: `${topToken.ethCollected.toFixed(4)} USDC` },
                   { label: "Progress", value: `${((topToken.ethCollected / 1) * 100).toFixed(1)}%`, blue: true },
