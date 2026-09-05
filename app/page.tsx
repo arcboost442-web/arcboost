@@ -362,7 +362,7 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
 
           {/* TOKEN GRID */}
           {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: "14px" }}>
               {[1,2,3,4,5,6].map(i => (
                 <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "14px", height: "200px", opacity: 0.4 }} />
               ))}
@@ -378,7 +378,7 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
               </Link>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "32px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: "14px", marginBottom: "32px" }}>
               {filtered.map((token) => {
   const pct = Math.min((token.ethCollected / 1) * 100, 100);
   const badge = getBadge(token);
