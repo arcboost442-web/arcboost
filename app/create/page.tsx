@@ -43,6 +43,7 @@ export default function CreateToken() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -55,6 +56,12 @@ export default function CreateToken() {
 });
 
   useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -215,7 +222,7 @@ args: [form.name, form.symbol, form.imageURI || logoPreview, form.description, f
         </div>
 
         {/* LAYOUT */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 272px", gap: "16px", alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 272px", gap: "16px", alignItems: "start" }}>
 
           {/* FORM */}
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "14px", overflow: "hidden" }}>
@@ -225,7 +232,7 @@ args: [form.name, form.symbol, form.imageURI || logoPreview, form.description, f
               <div style={{ fontSize: "10px", fontWeight: 600, color: DIM, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: "18px", display: "flex", alignItems: "center", gap: "10px" }}>
                 Token identity <div style={{ flex: 1, height: "1px", background: BORDER }} />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "112px 1fr", gap: "16px", alignItems: "start" }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "112px 1fr", gap: "16px", alignItems: "start" }}>
 
                 {/* Upload */}
                 <div>
