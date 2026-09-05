@@ -287,11 +287,11 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
             { label: "Avg. Weekly Tx Cost", value: "$0.004", sub: "Predictable fees" },
             { label: "Network", value: "Arc", sub: "Stablecoin-native L1" },
           ].map(s => (
-            <div key={s.label} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "18px", position: "relative", overflow: "hidden" }}>
+            <div key={s.label} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "24px", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: 0, right: 0, width: "60px", height: "60px", background: "radial-gradient(circle at 100% 0%, rgba(37,99,235,0.08) 0%, transparent 70%)" }} />
-              <div style={{ fontSize: "10px", color: SUB, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: "6px" }}>{s.label}</div>
-              <div style={{ fontSize: "22px", fontWeight: 700, color: TEXT, letterSpacing: "-.5px", marginBottom: "3px" }}>{s.value}</div>
-              <div style={{ fontSize: "11px", color: DIM }}>{s.sub}</div>
+              <div style={{ fontSize: "11px", color: SUB, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: "9px" }}>{s.label}</div>
+              <div style={{ fontSize: "28px", fontWeight: 700, color: TEXT, letterSpacing: "-.5px", marginBottom: "5px" }}>{s.value}</div>
+              <div style={{ fontSize: "12px", color: DIM }}>{s.sub}</div>
             </div>
           ))}
         </div>
@@ -301,14 +301,14 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
 
           {/* KING OF THE HILL */}
           {topToken && (
-            <div style={{ background: `linear-gradient(135deg, ${BLUE_DIM} 0%, #0A1A2E 100%)`, border: `1px solid ${BLUE_B}`, borderRadius: "14px", padding: "20px 24px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "20px", position: "relative", overflow: "hidden" }}>
+            <div style={{ background: `linear-gradient(135deg, ${BLUE_DIM} 0%, #0A1A2E 100%)`, border: `1px solid ${BLUE_B}`, borderRadius: "16px", padding: "28px 32px", marginBottom: "32px", display: "flex", alignItems: "center", gap: "24px", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", right: 0, top: 0, width: "300px", height: "100%", background: "radial-gradient(ellipse at 100% 50%, rgba(6,182,212,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
-              <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: CARD, border: `1px solid ${BORDER2}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
-                {topToken.imageURI ? <img src={topToken.imageURI} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontWeight: 700, fontSize: "18px", color: BLUE_LT }}>{topToken.symbol?.slice(0, 1)}</span>}
+              <div style={{ width: "60px", height: "60px", borderRadius: "14px", background: CARD, border: `1px solid ${BORDER2}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                {topToken.imageURI ? <img src={topToken.imageURI} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontWeight: 700, fontSize: "22px", color: BLUE_LT }}>{topToken.symbol?.slice(0, 1)}</span>}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "10px", color: BLUE_LT, textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, marginBottom: "3px" }}>Leading Market</div>
-                <div style={{ fontSize: "17px", fontWeight: 700, color: TEXT }}>{topToken.name} <span style={{ fontSize: "13px", color: BLUE_LT, fontWeight: 500 }}>{topToken.symbol}</span></div>
+                <div style={{ fontSize: "11px", color: BLUE_LT, textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, marginBottom: "5px" }}>Leading Market</div>
+                <div style={{ fontSize: "21px", fontWeight: 700, color: TEXT }}>{topToken.name} <span style={{ fontSize: "15px", color: BLUE_LT, fontWeight: 500 }}>{topToken.symbol}</span></div>
               </div>
               <div style={{ display: "flex", gap: "32px" }}>
                 {[
@@ -322,29 +322,29 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
                   </div>
                 ))}
               </div>
-              <button onClick={() => window.location.href = `/token/${topToken.tokenAddress}`} style={{ background: GRAD, color: "#fff", border: "none", borderRadius: "8px", padding: "10px 20px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0, boxShadow: "0 4px 16px rgba(37,99,235,0.3)" }}>
+              <button onClick={() => window.location.href = `/token/${topToken.tokenAddress}`} style={{ background: GRAD, color: "#fff", border: "none", borderRadius: "9px", padding: "13px 26px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0, boxShadow: "0 4px 16px rgba(37,99,235,0.3)" }}>
                 Trade
               </button>
             </div>
           )}
 
           {/* FILTER */}
-          <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
-            <div style={{ display: "flex", background: CARD, border: `1px solid ${BORDER}`, borderRadius: "9px", padding: "3px", gap: "2px" }}>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "24px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", background: CARD, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "4px", gap: "2px" }}>
               {["All", "Trending", "New", "Near Grad", "Graduated"].map(t => (
                 <button key={t} onClick={() => setTab(t)}
-                  style={{ padding: "6px 14px", borderRadius: "7px", fontSize: "12px", cursor: "pointer", color: tab === t ? TEXT : SUB, border: "none", background: tab === t ? CARD2 : "none", fontFamily: "inherit", fontWeight: tab === t ? 500 : 400, whiteSpace: "nowrap", transition: "all .15s" }}>
+                  style={{ padding: "8px 16px", borderRadius: "8px", fontSize: "13px", cursor: "pointer", color: tab === t ? TEXT : SUB, border: "none", background: tab === t ? CARD2 : "none", fontFamily: "inherit", fontWeight: tab === t ? 500 : 400, whiteSpace: "nowrap", transition: "all .15s" }}>
                   {t}
                 </button>
               ))}
             </div>
             <div style={{ flex: 1, minWidth: "200px", position: "relative" }}>
-              <svg style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={SUB} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <svg style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={SUB} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
               <input type="text" placeholder="Search tokens..." value={search} onChange={e => setSearch(e.target.value)}
-                style={{ width: "100%", background: CARD, border: `1px solid ${BORDER}`, borderRadius: "9px", color: TEXT, fontSize: "13px", padding: "9px 12px 9px 34px", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} />
+                style={{ width: "100%", background: CARD, border: `1px solid ${BORDER}`, borderRadius: "10px", color: TEXT, fontSize: "14px", padding: "11px 14px 11px 38px", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} />
             </div>
-            <button onClick={loadTokens} style={{ background: CARD, color: SUB, border: `1px solid ${BORDER}`, padding: "9px 14px", borderRadius: "9px", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "inherit" }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+            <button onClick={loadTokens} style={{ background: CARD, color: SUB, border: `1px solid ${BORDER}`, padding: "11px 16px", borderRadius: "10px", cursor: "pointer", fontSize: "14px", display: "flex", alignItems: "center", gap: "7px", fontFamily: "inherit" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
               Refresh
             </button>
           </div>
