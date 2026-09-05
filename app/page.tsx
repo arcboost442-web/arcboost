@@ -237,14 +237,14 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
               <span style={{ fontSize: "11px", color: "#34D399", fontWeight: 500 }}>Arc Testnet</span>
             </div>
           </div>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: isMobile ? "6px" : "10px", alignItems: "center" }}>
             {mounted && isConnected ? (
               <>
-                <div style={{ background: CARD, border: `1px solid ${BORDER2}`, borderRadius: "8px", padding: "7px 14px", fontSize: "13px", display: "flex", alignItems: "center", gap: "7px" }}>
+                <div style={{ background: CARD, border: `1px solid ${BORDER2}`, borderRadius: "8px", padding: isMobile ? "6px 8px" : "7px 14px", fontSize: "13px", display: "flex", alignItems: "center", gap: "7px" }}>
                   <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: address ? getIdenticonColor(address) : "#34D399", flexShrink: 0 }} />
                   <span style={{ color: SUB, fontFamily: "monospace", fontSize: "12px" }}>{address?.slice(0, 6)}...{address?.slice(-4)}</span>
                 </div>
-                <button onClick={() => disconnect()} style={{ background: "transparent", color: DIM, border: `1px solid ${BORDER}`, padding: "7px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>
+                <button onClick={() => disconnect()} style={{ background: "transparent", color: DIM, border: `1px solid ${BORDER}`, padding: isMobile ? "6px 8px" : "7px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                 </button>
               </>
