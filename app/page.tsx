@@ -296,20 +296,6 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
           ))}
         </div>
 
-        {/* TICKER */}
-        {tokens.length > 0 && (
-          <div style={{ background: CARD, borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: "10px 32px", display: "flex", alignItems: "center", gap: "14px", marginBottom: "32px", overflowX: "auto" }}>
-            <div style={{ display: "flex", gap: "24px" }}>
-              {tokens.slice(0, 8).map((t, i) => (
-                <div key={t.tokenAddress} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", whiteSpace: "nowrap", cursor: "pointer" }} onClick={() => window.location.href = `/token/${t.tokenAddress}`}>
-                  <span style={{ color: DIM, fontSize: "10px" }}>#{i + 1}</span>
-                  <span style={{ color: TEXT, fontWeight: 600 }}>{t.symbol}</span>
-                  <span style={{ color: CYAN, fontSize: "11px" }}>+{((t.ethCollected / 1) * 100).toFixed(0)}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 32px 60px" }}>
 
