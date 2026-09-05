@@ -13,6 +13,15 @@ const arcTestnet = defineChain({
   testnet: true,
 });
 
+function getIdenticonColor(addr: string): string {
+  let hash = 0;
+  for (let i = 0; i < addr.length; i++) {
+    hash = addr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 65%, 55%)`;
+}
+
 const publicClient = createPublicClient({
   chain: arcTestnet,
   transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
@@ -63,8 +72,14 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("All");
 const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di sini
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => { setMounted(true); loadTokens(); }, []);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const loadTokens = async () => {
   try {
@@ -182,7 +197,7 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
       <div style={{ position: "relative", zIndex: 1 }}>
 
         {/* NAVBAR */}
-        <nav style={{ borderBottom: `1px solid ${BORDER}`, padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "60px", background: "rgba(8,9,15,0.85)", backdropFilter: "blur(16px)", position: "sticky", top: 0, zIndex: 100 }}>
+        <nav style={{ borderBottom: scrolled ? `1px solid ${BORDER2}` : `1px solid ${BORDER}`, padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "60px", background: scrolled ? "rgba(8,9,15,0.96)" : "rgba(8,9,15,0.85)", backdropFilter: "blur(16px)", position: "sticky", top: 0, zIndex: 100, boxShadow: scrolled ? "0 4px 20px rgba(0,0,0,0.3)" : "none", transition: "all .25s ease" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
             {/* LOGO */}
             <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
@@ -219,7 +234,7 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
             {mounted && isConnected ? (
               <>
                 <div style={{ background: CARD, border: `1px solid ${BORDER2}`, borderRadius: "8px", padding: "7px 14px", fontSize: "13px", display: "flex", alignItems: "center", gap: "7px" }}>
-                  <div style={{ width: "7px", height: "7px", background: "#34D399", borderRadius: "50%", boxShadow: "0 0 6px #34D399" }} />
+                  <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: address ? getIdenticonColor(address) : "#34D399", flexShrink: 0 }} />
                   <span style={{ color: SUB, fontFamily: "monospace", fontSize: "12px" }}>{address?.slice(0, 6)}...{address?.slice(-4)}</span>
                 </div>
                 <button onClick={() => disconnect()} style={{ background: "transparent", color: DIM, border: `1px solid ${BORDER}`, padding: "7px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>
