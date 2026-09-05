@@ -299,7 +299,7 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
         {/* TICKER */}
         {tokens.length > 0 && (
           <div style={{ background: CARD, borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: "10px 32px", display: "flex", alignItems: "center", gap: "14px", marginBottom: "32px", overflowX: "auto" }}>
-            <div style={{ fontSize: "10px", fontWeight: 700, color: BLUE_LT, letterSpacing: ".08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>Live</div>
+            <div style={{ fontSize: "9px", fontWeight: 700, color: BLUE_LT, letterSpacing: ".03em", textTransform: "uppercase", whiteSpace: "nowrap", background: BLUE_DIM, border: `1px solid ${BLUE_B}`, borderRadius: "5px", padding: "3px 7px" }}>Live</div>
             <div style={{ width: "1px", height: "16px", background: BORDER2, flexShrink: 0 }} />
             <div style={{ display: "flex", gap: "24px" }}>
               {tokens.slice(0, 8).map((t, i) => (
