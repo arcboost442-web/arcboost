@@ -204,7 +204,7 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
       <div style={{ position: "relative", zIndex: 1 }}>
 
         {/* NAVBAR */}
-        <nav style={{ borderBottom: scrolled ? `1px solid ${BORDER2}` : `1px solid ${BORDER}`, padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "60px", background: scrolled ? "rgba(8,9,15,0.96)" : "rgba(8,9,15,0.85)", backdropFilter: "blur(16px)", position: "sticky", top: 0, zIndex: 100, boxShadow: scrolled ? "0 4px 20px rgba(0,0,0,0.3)" : "none", transition: "all .25s ease" }}>
+        <nav style={{ borderBottom: scrolled ? `1px solid ${BORDER2}` : `1px solid ${BORDER}`, padding: isMobile ? "0 16px" : "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "60px", background: scrolled ? "rgba(8,9,15,0.96)" : "rgba(8,9,15,0.85)", backdropFilter: "blur(16px)", position: "sticky", top: 0, zIndex: 100, boxShadow: scrolled ? "0 4px 20px rgba(0,0,0,0.3)" : "none", transition: "all .25s ease" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
             {/* LOGO */}
             <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
@@ -215,7 +215,7 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
             </div>
                         {/* NAV LINKS */}
             <div style={{ display: "flex", gap: "4px" }}>
-              {[{label:"Markets",href:"/",external:false},{label:"Docs",href:"https://docs.arcboost.fun",external:true},{label:"Portfolio",href:"/portfolio",external:false}].map((l,i) => (
+              {[{label:"Markets",href:"/",external:false},{label:"Docs",href:"https://docs.arcboost.fun",external:true},{label:"Portfolio",href:"/portfolio",external:false}].filter(l => !isMobile || l.label !== "Docs").map((l,i) => (
                 l.external ? (
                   <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" style={{textDecoration:"none"}}>
                     <button style={{ padding: "6px 14px", borderRadius: "7px", fontSize: "13px", color: SUB, cursor: "pointer", border: "none", background: "none", fontFamily: "inherit", fontWeight: 400 }}>
@@ -232,7 +232,7 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
                 )
               ))}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "5px 10px", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: "20px" }}>
+            <div style={{ display: isMobile ? "none" : "flex", alignItems: "center", gap: "6px", padding: "5px 10px", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: "20px" }}>
               <div style={{ width: "6px", height: "6px", background: "#34D399", borderRadius: "50%", boxShadow: "0 0 6px #34D399", animation: "pulse 2s ease-in-out infinite" }} />
               <span style={{ fontSize: "11px", color: "#34D399", fontWeight: 500 }}>Arc Testnet</span>
             </div>
@@ -251,12 +251,12 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
             ) : (
               <button onClick={connectWallet} style={{ background: CARD, border: `1px solid ${BORDER2}`, color: TEXT, borderRadius: "8px", padding: "7px 16px", fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", gap: "7px", fontFamily: "inherit" }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
-                Connect Wallet
+                {!isMobile && "Connect Wallet"}
               </button>
             )}
             <Link href="/create">
               <button style={{ background: GRAD, color: "#fff", border: "none", borderRadius: "8px", padding: "8px 18px", fontSize: "13px", fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 20px rgba(37,99,235,0.35)", fontFamily: "inherit" }}>
-                Launch Token
+                {isMobile ? "Launch" : "Launch Token"}
               </button>
             </Link>
           </div>
