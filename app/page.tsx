@@ -256,24 +256,24 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
         </nav>
 
         {/* HERO */}
-        <div style={{ padding: "56px 32px 40px", textAlign: "center" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: BLUE_DIM, border: `1px solid ${BLUE_B}`, borderRadius: "20px", padding: "5px 14px", fontSize: "11px", fontWeight: 600, color: BLUE_LT, marginBottom: "20px", letterSpacing: ".04em", textTransform: "uppercase" }}>
+        <div style={{ padding: "80px 32px 64px", textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: BLUE_DIM, border: `1px solid ${BLUE_B}`, borderRadius: "20px", padding: "5px 14px", fontSize: "11px", fontWeight: 600, color: BLUE_LT, marginBottom: "28px", letterSpacing: ".04em", textTransform: "uppercase" }}>
             <div style={{ width: "6px", height: "6px", background: CYAN, borderRadius: "50%", boxShadow: `0 0 8px ${CYAN}` }} />
             Live on Arc Testnet
           </div>
-          <h1 style={{ fontSize: "48px", fontWeight: 800, lineHeight: 1.1, color: TEXT, margin: "0 0 12px", letterSpacing: "-1.5px" }}>
+          <h1 style={{ fontSize: "60px", fontWeight: 800, lineHeight: 1.08, color: TEXT, margin: "0 0 20px", letterSpacing: "-2px" }}>
   Launch your token.<br />
   <span style={{ background: GRAD, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Own the curve.</span>
 </h1>
-          <p style={{ color: SUB, fontSize: "15px", maxWidth: "480px", margin: "0 auto 28px", lineHeight: "1.65" }}>
+          <p style={{ color: SUB, fontSize: "16px", maxWidth: "560px", margin: "0 auto 36px", lineHeight: "1.7" }}>
 No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding curve, and graduate to DEX when the market decides.          </p>
           <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
             <Link href="/create">
-              <button style={{ background: GRAD, color: "#fff", border: "none", borderRadius: "10px", padding: "13px 28px", fontSize: "14px", fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 32px rgba(37,99,235,0.4)", fontFamily: "inherit" }}>
+              <button style={{ background: GRAD, color: "#fff", border: "none", borderRadius: "11px", padding: "16px 34px", fontSize: "15px", fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 32px rgba(37,99,235,0.4)", fontFamily: "inherit" }}>
                 Launch a Token
               </button>
             </Link>
-            <button onClick={() => setShowHowItWorks(true)} style={{ background: CARD, color: TEXT, border: `1px solid ${BORDER2}`, borderRadius: "10px", padding: "13px 28px", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>
+            <button onClick={() => setShowHowItWorks(true)} style={{ background: CARD, color: TEXT, border: `1px solid ${BORDER2}`, borderRadius: "11px", padding: "16px 34px", fontSize: "15px", cursor: "pointer", fontFamily: "inherit" }}>
   How it works
 </button>
           </div>
