@@ -193,12 +193,26 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
             </div>
                         {/* NAV LINKS */}
             <div style={{ display: "flex", gap: "4px" }}>
-              {[{label:"Markets",href:"/"},{label:"Launch",href:"/create"},{label:"Portfolio",href:"/portfolio"}].map((l,i) => (
-                <Link key={l.label} href={l.href} style={{textDecoration:"none"}}>
-                  <button style={{ padding: "6px 14px", borderRadius: "7px", fontSize: "13px", color: i === 0 ? TEXT : SUB, cursor: "pointer", border: "none", background: i === 0 ? CARD2 : "none", fontFamily: "inherit", fontWeight: i === 0 ? 500 : 400 }}>{l.label}</button>
-                </Link>
+              {[{label:"Markets",href:"/",external:false},{label:"Docs",href:"https://docs.arcboost.fun",external:true},{label:"Portfolio",href:"/portfolio",external:false}].map((l,i) => (
+                l.external ? (
+                  <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" style={{textDecoration:"none"}}>
+                    <button style={{ padding: "6px 14px", borderRadius: "7px", fontSize: "13px", color: SUB, cursor: "pointer", border: "none", background: "none", fontFamily: "inherit", fontWeight: 400 }}>
+                      {l.label}
+                    </button>
+                  </a>
+                ) : (
+                  <Link key={l.label} href={l.href} style={{textDecoration:"none"}}>
+                    <button style={{ padding: "6px 14px", borderRadius: "7px", fontSize: "13px", color: i === 0 ? TEXT : SUB, cursor: "pointer", border: "none", background: "none", fontFamily: "inherit", fontWeight: i === 0 ? 500 : 400, position: "relative" }}>
+                      {l.label}
+                      {i === 0 && <div style={{ position: "absolute", bottom: "-8px", left: "14px", right: "14px", height: "2px", background: GRAD, borderRadius: "2px" }} />}
+                    </button>
+                  </Link>
+                )
               ))}
-          
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "5px 10px", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: "20px" }}>
+              <div style={{ width: "6px", height: "6px", background: "#34D399", borderRadius: "50%", boxShadow: "0 0 6px #34D399", animation: "pulse 2s ease-in-out infinite" }} />
+              <span style={{ fontSize: "11px", color: "#34D399", fontWeight: 500 }}>Arc Testnet</span>
             </div>
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -502,7 +516,7 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
         </div>
       </div>
 
-      <style>{`* { box-sizing: border-box; } input::placeholder { color: #374151; }`}</style>
+      <style>{`* { box-sizing: border-box; } input::placeholder { color: #374151; } @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
     </main>
   );
 }
