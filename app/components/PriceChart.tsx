@@ -46,7 +46,6 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
     if (!chartRef.current || data.length === 0) return;
 
     const candles = aggregateToCandles(data);
-    console.log("DEBUG candles:", candles);
     if (candles.length === 0) return;
 
     const chart = createChart(chartRef.current, {
@@ -83,7 +82,7 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
       wickUpColor: "#22C55E",
       wickDownColor: "#EF4444",
       priceLineVisible: false,
-    });
+    }, 0);
     candleSeries.setData(candles.map(c => ({
       time: c.time as any,
       open: c.open,
@@ -94,16 +93,13 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" },
-      priceScaleId: "",
-    });
-    volumeSeries.priceScale().applyOptions({
-      scaleMargins: { top: 0.7, bottom: 0 },
-    });
+    }, 1);
     volumeSeries.setData(candles.map(c => ({
       time: c.time as any,
       value: c.volume,
       color: c.close >= c.open ? "rgba(34,197,94,0.9)" : "rgba(239,68,68,0.9)",
     })));
+    chart.panes()[1]?.setHeight(80);
 
     if (candles.length <= 5) {
       chart.timeScale().applyOptions({ barSpacing: 24, rightOffset: 8 });
