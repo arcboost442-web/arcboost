@@ -65,8 +65,8 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
         timeVisible: true,
         secondsVisible: false,
         borderColor: "#1C2235",
-        fixLeftEdge: true,
-        fixRightEdge: true,
+        fixLeftEdge: false,
+        fixRightEdge: false,
       },
       rightPriceScale: {
         borderColor: "#1C2235",
