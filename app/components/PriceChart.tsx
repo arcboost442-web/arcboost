@@ -58,19 +58,23 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
         },
       },
     });
+    // Tentukan tren: hijau kalau naik, merah kalau turun dari titik awal
+    const isUp = filtered[filtered.length - 1].value >= filtered[0].value;
+    const lineColor = isUp ? "#22C55E" : "#EF4444";
+    const topColor = isUp ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)";
+    const bottomColor = isUp ? "rgba(34,197,94,0.0)" : "rgba(239,68,68,0.0)";
 
-    // Area series — clean gradient seperti DexScreener
     const areaSeries = chart.addSeries(AreaSeries, {
-      lineColor: "#3B82F6",
-      topColor: "rgba(37,99,235,0.3)",
-      bottomColor: "rgba(37,99,235,0.0)",
+      lineColor: lineColor,
+      topColor: topColor,
+      bottomColor: bottomColor,
       lineWidth: 2,
       lineStyle: LineStyle.Solid,
       priceLineVisible: false,
       lastValueVisible: true,
       crosshairMarkerVisible: true,
       crosshairMarkerRadius: 5,
-      crosshairMarkerBorderColor: "#3B82F6",
+      crosshairMarkerBorderColor: lineColor,
       crosshairMarkerBackgroundColor: "#0F1A35",
     });
 
