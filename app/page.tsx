@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount, useDisconnect, useConnect } from "wagmi";
 import { createPublicClient, http, formatEther, defineChain } from "viem";
 import Link from "next/link";
 
@@ -66,6 +66,7 @@ type Token = { tokenAddress: string; name: string; symbol: string; imageURI: str
 export default function Home() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const { connectors, connect } = useConnect();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [tokens, setTokens] = useState<Token[]>([]);
@@ -109,11 +110,10 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
   finally { setLoading(false); }
 };
 
-  const connectWallet = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try { await window.ethereum.request({ method: "eth_requestAccounts" }); window.location.reload(); }
-      catch (err) { console.error(err); }
-    }
+  const connectWallet = () => {
+    const injectedConnector = connectors.find(c => c.id === "injected" && typeof window !== "undefined" && (window as any).ethereum);
+    const target = injectedConnector || connectors.find(c => c.id === "walletConnect") || connectors[0];
+    if (target) connect({ connector: target });
   };
 
   const getBadge = (t: Token) => {
