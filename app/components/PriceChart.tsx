@@ -1,9 +1,43 @@
 "use client";
-
 import { useEffect, useRef } from "react";
-import { createChart, ColorType, LineStyle, LineSeries, AreaSeries } from "lightweight-charts";
+import { createChart, ColorType, CandlestickSeries, HistogramSeries } from "lightweight-charts";
 
-type PricePoint = { time: number; value: number; };
+type PricePoint = { time: number; value: number; volume?: number };
+
+const CANDLE_INTERVAL = 3600; // 1 jam, dalam detik
+
+function aggregateToCandles(data: PricePoint[]) {
+  const filtered = data
+    .filter(d => d.value > 0)
+    .sort((a, b) => a.time - b.time);
+
+  if (filtered.length === 0) return [];
+
+  const buckets = new Map<number, { open: number; high: number; low: number; close: number; volume: number }>();
+
+  for (const point of filtered) {
+    const bucketTime = Math.floor(point.time / CANDLE_INTERVAL) * CANDLE_INTERVAL;
+    const existing = buckets.get(bucketTime);
+    if (!existing) {
+      buckets.set(bucketTime, {
+        open: point.value,
+        high: point.value,
+        low: point.value,
+        close: point.value,
+        volume: point.volume || 0,
+      });
+    } else {
+      existing.high = Math.max(existing.high, point.value);
+      existing.low = Math.min(existing.low, point.value);
+      existing.close = point.value;
+      existing.volume += point.volume || 0;
+    }
+  }
+
+  return Array.from(buckets.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([time, c]) => ({ time, ...c }));
+}
 
 export default function PriceChart({ data }: { data: PricePoint[] }) {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -11,13 +45,8 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
   useEffect(() => {
     if (!chartRef.current || data.length === 0) return;
 
-    // Filter out zero values dan sort by time
-    const filtered = data
-      .filter(d => d.value > 0)
-      .sort((a, b) => a.time - b.time)
-      .filter((d, i, arr) => i === 0 || d.time !== arr[i-1].time);
-
-    if (filtered.length === 0) return;
+    const candles = aggregateToCandles(data);
+    if (candles.length === 0) return;
 
     const chart = createChart(chartRef.current, {
       layout: {
@@ -41,44 +70,40 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
       },
       rightPriceScale: {
         borderColor: "#1C2235",
-        scaleMargins: { top: 0.1, bottom: 0.1 },
-      },
-      crosshair: {
-        vertLine: {
-          color: "#3B82F6",
-          width: 1,
-          style: LineStyle.Dashed,
-          labelBackgroundColor: "#2563EB",
-        },
-        horzLine: {
-          color: "#3B82F6",
-          width: 1,
-          style: LineStyle.Dashed,
-          labelBackgroundColor: "#2563EB",
-        },
+        scaleMargins: { top: 0.1, bottom: 0.3 },
       },
     });
-    // Tentukan tren: hijau kalau naik, merah kalau turun dari titik awal
-    const isUp = filtered[filtered.length - 1].value >= filtered[0].value;
-    const lineColor = isUp ? "#22C55E" : "#EF4444";
-    const topColor = isUp ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)";
-    const bottomColor = isUp ? "rgba(34,197,94,0.0)" : "rgba(239,68,68,0.0)";
 
-    const areaSeries = chart.addSeries(AreaSeries, {
-      lineColor: lineColor,
-      topColor: topColor,
-      bottomColor: bottomColor,
-      lineWidth: 2,
-      lineStyle: LineStyle.Solid,
+    const candleSeries = chart.addSeries(CandlestickSeries, {
+      upColor: "#22C55E",
+      downColor: "#EF4444",
+      borderUpColor: "#22C55E",
+      borderDownColor: "#EF4444",
+      wickUpColor: "#22C55E",
+      wickDownColor: "#EF4444",
       priceLineVisible: false,
-      lastValueVisible: true,
-      crosshairMarkerVisible: true,
-      crosshairMarkerRadius: 5,
-      crosshairMarkerBorderColor: lineColor,
-      crosshairMarkerBackgroundColor: "#0F1A35",
     });
+    candleSeries.setData(candles.map(c => ({
+      time: c.time as any,
+      open: c.open,
+      high: c.high,
+      low: c.low,
+      close: c.close,
+    })));
 
-    areaSeries.setData(filtered.map(d => ({ time: d.time as any, value: d.value })));
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: { type: "volume" },
+      priceScaleId: "",
+    });
+    volumeSeries.priceScale().applyOptions({
+      scaleMargins: { top: 0.8, bottom: 0 },
+    });
+    volumeSeries.setData(candles.map(c => ({
+      time: c.time as any,
+      value: c.volume,
+      color: c.close >= c.open ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.5)",
+    })));
+
     chart.timeScale().fitContent();
 
     const handleResize = () => {
@@ -91,6 +116,5 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
   }, [data]);
 
   if (data.length === 0) return null;
-
   return <div ref={chartRef} style={{ width: "100%", borderRadius: "8px", overflow: "hidden" }} />;
 }

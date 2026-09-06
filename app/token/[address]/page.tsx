@@ -163,12 +163,12 @@ export default function TokenPage() {
     } catch(e) { console.error(e); }
   };
 
-  const savePricePoint = (ethCollected: number, totalSupply: number) => {
+  const savePricePoint = (ethCollected: number, totalSupply: number, volume: number = 0) => {
     if (totalSupply === 0) return;
     const price = ethCollected / totalSupply;
     const key = `chart_${tokenAddress}`;
     const existing = JSON.parse(localStorage.getItem(key) || "[]");
-    existing.push({ time: Math.floor(Date.now() / 1000), value: price });
+    existing.push({ time: Math.floor(Date.now() / 1000), value: price, volume });
     if (existing.length > 200) existing.shift();
     localStorage.setItem(key, JSON.stringify(existing));
   };
@@ -258,6 +258,7 @@ export default function TokenPage() {
 
   const exec = async (fn: () => Promise<void>) => {
     if (!isConnected) return setError("Connect wallet first.");
+    const ethCBefore = token ? Number(formatEther(token.ethCollected)) : 0;
     try {
       setTxLoading(true); setError(""); setSuccess("");
       await new Promise(r => setTimeout(r, 3000));
@@ -267,7 +268,8 @@ export default function TokenPage() {
       if (updatedToken) {
         const ethC = Number(formatEther(updatedToken.ethCollected));
         const totSup = Number(formatEther(updatedToken.totalSupply));
-        savePricePoint(ethC, totSup);
+        const volume = Math.abs(ethC - ethCBefore);
+        savePricePoint(ethC, totSup, volume);
         loadChartData(updatedToken);
       }
             loadTxs();
