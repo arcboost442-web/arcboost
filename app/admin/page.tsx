@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount, useDisconnect, useConnect, useWalletClient } from "wagmi";
 import { createPublicClient, http, formatEther, defineChain, parseEther } from "viem";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -66,6 +66,8 @@ const GRAD     = "linear-gradient(135deg, #2563EB 0%, #06B6D4 100%)";
 export default function AdminPage() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const { connectors, connect } = useConnect();
+  const { data: walletClient } = useWalletClient();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -161,24 +163,21 @@ setCurrentDefaultGrad(formatEther(defGrad as bigint));
 
   const handleSetTreasury = () => execTx(async () => {
     if (!newTreasury.startsWith("0x")) throw new Error("Invalid address format.");
-    const { createWalletClient, custom } = await import("viem");
-    const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
-    await wc.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setTreasury", args: [newTreasury as `0x${string}`], account: address! });
+    if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
+    await walletClient.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setTreasury", args: [newTreasury as `0x${string}`], account: address! });
     setNewTreasury("");
   });
 
   const handleSetDeployFee = () => execTx(async () => {
     if (!newDeployFee || isNaN(Number(newDeployFee))) throw new Error("Invalid fee amount.");
-    const { createWalletClient, custom } = await import("viem");
-    const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
-    await wc.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setDeployFee", args: [parseEther(newDeployFee)], account: address! });
+    if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
+    await walletClient.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setDeployFee", args: [parseEther(newDeployFee)], account: address! });
     setNewDeployFee("");
   });
 const handleSetDefaultGradTarget = () => execTx(async () => {
   if (!defaultGradTarget || isNaN(Number(defaultGradTarget))) throw new Error("Invalid target amount.");
-  const { createWalletClient, custom } = await import("viem");
-  const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
-  await wc.writeContract({
+  if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
+  await walletClient.writeContract({
     address: FACTORY_ADDRESS,
     abi: FACTORY_ABI,
     functionName: "setDefaultGradTarget",
@@ -190,8 +189,7 @@ const handleSetDefaultGradTarget = () => execTx(async () => {
 
 const handleSetGradTarget = () => execTx(async () => {
   if (!newGradTarget || isNaN(Number(newGradTarget))) throw new Error("Invalid target amount.");
-  const { createWalletClient, custom } = await import("viem");
-  const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
+  if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
 
   const addrs = await publicClient.readContract({
     address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens"
@@ -218,7 +216,7 @@ const handleSetGradTarget = () => execTx(async () => {
         continue;
       }
 
-      await wc.writeContract({
+      await walletClient.writeContract({
         address: addr,
         abi: [{
           name: "setGradTarget",
@@ -241,8 +239,7 @@ const handleSetGradTarget = () => execTx(async () => {
   setNewGradTarget("");
 });
 const handleWithdraw = () => execTx(async () => {
-  const { createWalletClient, custom } = await import("viem");
-  const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
+  if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
   const addrs = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" });
   let withdrawn = 0;
   for (const addr of addrs) {
@@ -251,7 +248,7 @@ const handleWithdraw = () => execTx(async () => {
       if (graduated) {
         const balance = await publicClient.getBalance({ address: addr });
         if (balance > BigInt(0)) {
-          await wc.writeContract({ address: addr, abi: [{ name: "withdrawFunds", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] }], functionName: "withdrawFunds", account: address! });
+          await walletClient.writeContract({ address: addr, abi: [{ name: "withdrawFunds", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] }], functionName: "withdrawFunds", account: address! });
           withdrawn++;
         }
       }
@@ -261,8 +258,7 @@ const handleWithdraw = () => execTx(async () => {
 });
 
 const handleEmergencyWithdraw = () => execTx(async () => {
-  const { createWalletClient, custom } = await import("viem");
-  const wc = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
+  if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
   const addrs = await publicClient.readContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens" });
   let withdrawn = 0;
   for (const addr of addrs) {
@@ -271,7 +267,7 @@ const handleEmergencyWithdraw = () => execTx(async () => {
       if (!graduated) {
         const eth = await publicClient.readContract({ address: addr, abi: TOKEN_ABI, functionName: "ethCollected" });
         if ((eth as bigint) > BigInt(0)) {
-          await wc.writeContract({ address: addr, abi: [{ name: "emergencyWithdraw", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] }], functionName: "emergencyWithdraw", account: address! });
+          await walletClient.writeContract({ address: addr, abi: [{ name: "emergencyWithdraw", type: "function", stateMutability: "nonpayable", inputs: [], outputs: [] }], functionName: "emergencyWithdraw", account: address! });
           withdrawn++;
         }
       }
@@ -279,11 +275,10 @@ const handleEmergencyWithdraw = () => execTx(async () => {
   }
   if (withdrawn === 0) throw new Error("No active tokens with funds to withdraw.");
 });
-  const connectWallet = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try { await window.ethereum.request({ method: "eth_requestAccounts" }); window.location.reload(); }
-      catch (err) { console.error(err); }
-    }
+  const connectWallet = () => {
+    const injectedConnector = connectors.find(c => c.id === "injected" && typeof window !== "undefined" && (window as any).ethereum);
+    const target = injectedConnector || connectors.find(c => c.id === "walletConnect") || connectors[0];
+    if (target) connect({ connector: target });
   };
 
   // Not connected
