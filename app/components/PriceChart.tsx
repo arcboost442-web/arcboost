@@ -96,12 +96,12 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
       priceScaleId: "",
     });
     volumeSeries.priceScale().applyOptions({
-      scaleMargins: { top: 0.8, bottom: 0 },
+      scaleMargins: { top: 0.7, bottom: 0 },
     });
     volumeSeries.setData(candles.map(c => ({
       time: c.time as any,
       value: c.volume,
-      color: c.close >= c.open ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.5)",
+      color: c.close >= c.open ? "rgba(34,197,94,0.9)" : "rgba(239,68,68,0.9)",
     })));
 
     if (candles.length <= 5) {
