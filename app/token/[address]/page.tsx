@@ -146,7 +146,7 @@ export default function TokenPage() {
       if (!tokenData) return;
       const key = `chart_${tokenAddress}`;
       const stored = JSON.parse(localStorage.getItem(key) || "[]");
-      if (stored.length > 1) {
+      if (stored.length >= 1) {
         setChart(stored);
         return;
       }
