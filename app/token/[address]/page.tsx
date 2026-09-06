@@ -348,21 +348,21 @@ export default function TokenPage() {
           </div>
           <span style={{fontWeight:700,fontSize:"15px",background:GRAD,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>ArcBoost</span>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:"6px",fontSize:"12px",color:SUB}}>
-          <span onClick={()=>router.push("/")} style={{color:BLUE_LT,cursor:"pointer",fontWeight:500}}>Markets</span>
-          <span style={{color:DIM}}>/</span>
-          <span style={{color:TEXT,fontWeight:500}}>{token.name}</span>
-          <span style={{color:DIM}}>/</span>
-          <span style={{color:DIM,fontFamily:"monospace",fontSize:"11px"}}>{tokenAddress.slice(0,6)}...{tokenAddress.slice(-4)}</span>
+        <div style={{display:"flex",alignItems:"center",gap:"6px",fontSize:"12px",color:SUB,minWidth:0,overflow:"hidden"}}>
+          {!isMobile && <span onClick={()=>router.push("/")} style={{color:BLUE_LT,cursor:"pointer",fontWeight:500,flexShrink:0}}>Markets</span>}
+          {!isMobile && <span style={{color:DIM,flexShrink:0}}>/</span>}
+          <span style={{color:TEXT,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{token.name}</span>
+          {!isMobile && <span style={{color:DIM,flexShrink:0}}>/</span>}
+          {!isMobile && <span style={{color:DIM,fontFamily:"monospace",fontSize:"11px",flexShrink:0}}>{tokenAddress.slice(0,6)}...{tokenAddress.slice(-4)}</span>}
         </div>
-        <div style={{marginLeft:"auto",display:"flex",gap:"8px"}}>
+        <div style={{marginLeft:"auto",display:"flex",gap:isMobile?"6px":"8px",flexShrink:0}}>
           <button onClick={() => {
             navigator.clipboard.writeText(tokenAddress);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
-          }} style={{background:CARD,border:`1px solid ${BORDER2}`,color:copied?BLUE_LT:SUB,borderRadius:"7px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",display:"flex",alignItems:"center",gap:"5px",fontFamily:"inherit",transition:"color .15s"}}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            {copied ? "Copied!" : "Copy"}
+          }} style={{background:CARD,border:`1px solid ${BORDER2}`,color:copied?BLUE_LT:SUB,borderRadius:"7px",padding:isMobile?"6px 8px":"6px 12px",fontSize:"11px",cursor:"pointer",display:"flex",alignItems:"center",gap:"5px",fontFamily:"inherit",transition:"color .15s"}}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a22 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            {!isMobile && (copied ? "Copied!" : "Copy")}
           </button>
           <button onClick={() => {
             const url = `${window.location.origin}/token/${tokenAddress}`;
@@ -373,8 +373,8 @@ export default function TokenPage() {
               setCopied(true);
               setTimeout(() => setCopied(false), 2000);
             }
-          }} style={{background:CARD,border:`1px solid ${BORDER2}`,color:SUB,borderRadius:"7px",padding:"6px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"inherit"}}>
-            Share
+          }} style={{background:CARD,border:`1px solid ${BORDER2}`,color:SUB,borderRadius:"7px",padding:isMobile?"6px 8px":"6px 12px",fontSize:"11px",cursor:"pointer",fontFamily:"inherit"}}>
+            {isMobile ? "↗" : "Share"}
           </button>
         </div>
       </nav>
