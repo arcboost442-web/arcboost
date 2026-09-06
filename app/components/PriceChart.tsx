@@ -46,6 +46,7 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
     if (!chartRef.current || data.length === 0) return;
 
     const candles = aggregateToCandles(data);
+    console.log("DEBUG candles:", candles);
     if (candles.length === 0) return;
 
     const chart = createChart(chartRef.current, {
