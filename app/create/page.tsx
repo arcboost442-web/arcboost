@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
+import { useAccount, useWalletClient } from "wagmi";
 import { parseEther, defineChain } from "viem";
 
 const arcTestnet = defineChain({
@@ -42,6 +42,7 @@ const GRAD    = "linear-gradient(135deg, #2563EB 0%, #06B6D4 100%)";
 export default function CreateToken() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -132,8 +133,7 @@ const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true); setError(""); setSuccess("");
       await new Promise(r => setTimeout(r, 800));
-      const { createWalletClient, custom } = await import("viem");
-      const walletClient = createWalletClient({ chain: arcTestnet, transport: custom((window as any).ethereum) });
+      if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
       await walletClient.writeContract({
         address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "createToken",
 args: [form.name, form.symbol, form.imageURI || logoPreview, form.description, form.twitter, form.telegram, form.website],        value: parseEther("0.001"), account: address!,
