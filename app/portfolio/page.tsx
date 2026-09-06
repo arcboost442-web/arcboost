@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount, useDisconnect, useConnect } from "wagmi";
 import { createPublicClient, http, formatEther, defineChain } from "viem";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -76,6 +76,7 @@ type TokenHolding = {
 export default function PortfolioPage() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const { connectors, connect } = useConnect();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [holdings, setHoldings] = useState<TokenHolding[]>([]);
@@ -85,13 +86,10 @@ export default function PortfolioPage() {
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { if (address) loadPortfolio(); }, [address]);
 
-  const connectWallet = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        window.location.reload();
-      } catch (err) { console.error(err); }
-    }
+  const connectWallet = () => {
+    const injectedConnector = connectors.find(c => c.id === "injected" && typeof window !== "undefined" && (window as any).ethereum);
+    const target = injectedConnector || connectors.find(c => c.id === "walletConnect") || connectors[0];
+    if (target) connect({ connector: target });
   };
 
   const loadPortfolio = async () => {
