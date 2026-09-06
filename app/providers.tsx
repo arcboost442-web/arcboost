@@ -1,6 +1,7 @@
 "use client";
 
 import { createConfig, http, WagmiProvider } from "wagmi";
+import { injected, walletConnect } from "wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { defineChain } from "viem";
 
@@ -28,6 +29,13 @@ const arcTestnet = defineChain({
 
 const config = createConfig({
   chains: [arcTestnet],
+  connectors: [
+    injected(),
+    walletConnect({
+      projectId: "92dd7e3853740570d6fdf91afe366a2e",
+      showQrModal: true,
+    }),
+  ],
   transports: {
     [arcTestnet.id]: http("https://rpc.testnet.arc.io"),
   },
