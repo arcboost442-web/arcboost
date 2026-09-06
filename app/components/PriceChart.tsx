@@ -104,7 +104,11 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
       color: c.close >= c.open ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.5)",
     })));
 
-    chart.timeScale().fitContent();
+    if (candles.length <= 5) {
+      chart.timeScale().applyOptions({ barSpacing: 24, rightOffset: 8 });
+    } else {
+      chart.timeScale().fitContent();
+    }
 
     const handleResize = () => {
       if (chartRef.current) {
