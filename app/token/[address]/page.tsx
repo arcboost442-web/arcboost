@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createPublicClient, http, parseEther, formatEther, defineChain, getAddress } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useWalletClient, useConnect } from "wagmi";
 import dynamic from "next/dynamic";
 
 const PriceChart = dynamic(() => import("../../components/PriceChart"), { ssr: false });
@@ -74,6 +74,8 @@ export default function TokenPage() {
   const params = useParams();
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const { connectors, connect } = useConnect();
   const tokenAddress = getAddress(params.address as string) as `0x${string}`;
 
   const [token, setToken]         = useState<any>(null);
@@ -269,9 +271,8 @@ export default function TokenPage() {
 
   // FIX: handleBuy pakai functionName "buy"
   const handleBuy = () => exec(async () => {
-    const {createWalletClient, custom} = await import("viem");
-    const wc = createWalletClient({chain: arcTestnet, transport: custom((window as any).ethereum)});
-    await wc.writeContract({
+    if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
+    await walletClient.writeContract({
       address: tokenAddress,
       abi: TOKEN_ABI,
       functionName: "buy",
@@ -288,9 +289,8 @@ export default function TokenPage() {
       return;
     }
     exec(async () => {
-      const {createWalletClient, custom} = await import("viem");
-      const wc = createWalletClient({chain: arcTestnet, transport: custom((window as any).ethereum)});
-      await wc.writeContract({
+      if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
+      await walletClient.writeContract({
         address: tokenAddress,
         abi: TOKEN_ABI,
         functionName: "sell",
