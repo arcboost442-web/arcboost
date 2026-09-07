@@ -447,7 +447,7 @@ export default function TokenPage() {
                 </div>
               </div>
               {chartData.length > 0
-                ? <PriceChart data={chartData}/>
+                ? <PriceChart data={chartData} timeframe={timeframe}/>
                 : <div style={{height:"260px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"8px"}}>
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={DIM} strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                     <div style={{color:DIM,fontSize:"12px"}}>No price data yet</div>

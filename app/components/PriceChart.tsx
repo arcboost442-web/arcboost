@@ -4,19 +4,30 @@ import { createChart, ColorType, CandlestickSeries, HistogramSeries } from "ligh
 
 type PricePoint = { time: number; value: number; volume?: number };
 
-const CANDLE_INTERVAL = 3600; // 1 jam, dalam detik
+const TIMEFRAME_CONFIG: Record<string, { interval: number; rangeSeconds: number | null }> = {
+  "1H": { interval: 300, rangeSeconds: 3600 },        // candle 5 menit, tampilkan 1 jam terakhir
+  "4H": { interval: 900, rangeSeconds: 14400 },       // candle 15 menit, tampilkan 4 jam terakhir
+  "1D": { interval: 3600, rangeSeconds: 86400 },      // candle 1 jam, tampilkan 1 hari terakhir
+  "ALL": { interval: 3600, rangeSeconds: null },      // candle 1 jam, tampilkan semua data
+};
 
-function aggregateToCandles(data: PricePoint[]) {
-  const filtered = data
+function aggregateToCandles(data: PricePoint[], interval: number, rangeSeconds: number | null) {
+  let filtered = data
     .filter(d => d.value > 0)
     .sort((a, b) => a.time - b.time);
+
+  if (rangeSeconds !== null && filtered.length > 0) {
+    const latestTime = filtered[filtered.length - 1].time;
+    const cutoff = latestTime - rangeSeconds;
+    filtered = filtered.filter(d => d.time >= cutoff);
+  }
 
   if (filtered.length === 0) return [];
 
   const buckets = new Map<number, { open: number; high: number; low: number; close: number; volume: number }>();
 
   for (const point of filtered) {
-    const bucketTime = Math.floor(point.time / CANDLE_INTERVAL) * CANDLE_INTERVAL;
+    const bucketTime = Math.floor(point.time / interval) * interval;
     const existing = buckets.get(bucketTime);
     if (!existing) {
       buckets.set(bucketTime, {
@@ -39,13 +50,14 @@ function aggregateToCandles(data: PricePoint[]) {
     .map(([time, c]) => ({ time, ...c }));
 }
 
-export default function PriceChart({ data }: { data: PricePoint[] }) {
+export default function PriceChart({ data, timeframe = "ALL" }: { data: PricePoint[]; timeframe?: string }) {
   const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!chartRef.current || data.length === 0) return;
 
-    const candles = aggregateToCandles(data);
+    const config = TIMEFRAME_CONFIG[timeframe] || TIMEFRAME_CONFIG["ALL"];
+    const candles = aggregateToCandles(data, config.interval, config.rangeSeconds);
     if (candles.length === 0) return;
 
     const chart = createChart(chartRef.current, {
@@ -114,7 +126,7 @@ export default function PriceChart({ data }: { data: PricePoint[] }) {
     };
     window.addEventListener("resize", handleResize);
     return () => { window.removeEventListener("resize", handleResize); chart.remove(); };
-  }, [data]);
+  }, [data, timeframe]);
 
   if (data.length === 0) return null;
   return <div ref={chartRef} style={{ width: "100%", borderRadius: "8px", overflow: "hidden" }} />;
