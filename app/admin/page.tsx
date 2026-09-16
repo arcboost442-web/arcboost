@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAccount, useDisconnect, useConnect, useWalletClient } from "wagmi";
-import { createPublicClient, http, formatEther, defineChain, parseEther } from "viem";
+import { createPublicClient, http, formatEther, formatUnits, defineChain, parseEther, parseUnits, isAddress } from "viem";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -116,13 +116,13 @@ const [currentDefaultGrad, setCurrentDefaultGrad] = useState("0");
 ]);
 
 setTotalTokens(addrs.length);
-setDeployFee(formatEther(fee));
+setDeployFee(formatUnits(fee, 6));
 setTreasuryAddress(treasury);
-setCurrentDefaultGrad(formatEther(defGrad as bigint));
+setCurrentDefaultGrad(formatUnits(defGrad as bigint, 6));
 
       // Cek balance treasury
       const balance = await publicClient.getBalance({ address: treasury as `0x${string}` });
-      setTreasuryBalance(parseFloat(formatEther(balance)).toFixed(6));
+      setTreasuryBalance(parseFloat(formatUnits(balance, 6)).toFixed(6));
 
       // Hitung total volume & graduated
       let vol = 0, grad = 0;
@@ -162,7 +162,7 @@ setCurrentDefaultGrad(formatEther(defGrad as bigint));
   };
 
   const handleSetTreasury = () => execTx(async () => {
-    if (!newTreasury.startsWith("0x")) throw new Error("Invalid address format.");
+    if (!isAddress(newTreasury)) throw new Error("Invalid address format.");
     if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
     await walletClient.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setTreasury", args: [newTreasury as `0x${string}`], account: address! });
     setNewTreasury("");
@@ -171,7 +171,7 @@ setCurrentDefaultGrad(formatEther(defGrad as bigint));
   const handleSetDeployFee = () => execTx(async () => {
     if (!newDeployFee || isNaN(Number(newDeployFee))) throw new Error("Invalid fee amount.");
     if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
-    await walletClient.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setDeployFee", args: [parseEther(newDeployFee)], account: address! });
+    await walletClient.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setDeployFee", args: [parseUnits(newDeployFee, 6)], account: address! });
     setNewDeployFee("");
   });
 const handleSetDefaultGradTarget = () => execTx(async () => {
@@ -181,7 +181,7 @@ const handleSetDefaultGradTarget = () => execTx(async () => {
     address: FACTORY_ADDRESS,
     abi: FACTORY_ABI,
     functionName: "setDefaultGradTarget",
-    args: [parseEther(defaultGradTarget)],
+    args: [parseUnits(defaultGradTarget, 6)],
     account: address!,
   });
   setDefaultGradTargetVal("");
@@ -195,7 +195,7 @@ const handleSetGradTarget = () => execTx(async () => {
     address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens"
   });
 
-  const newTargetWei = parseEther(newGradTarget);
+  const newTargetWei = parseUnits(newGradTarget, 6);
   let updated = 0;
   let skipped = 0;
 
@@ -217,16 +217,10 @@ const handleSetGradTarget = () => execTx(async () => {
       }
 
       await walletClient.writeContract({
-        address: addr,
-        abi: [{
-          name: "setGradTarget",
-          type: "function",
-          stateMutability: "nonpayable",
-          inputs: [{ name: "newTarget", type: "uint256" }],
-          outputs: []
-        }],
-        functionName: "setGradTarget",
-        args: [newTargetWei],
+        address: FACTORY_ADDRESS,
+        abi: FACTORY_ABI,
+        functionName: "setTokenGradTarget",
+        args: [addr as `0x${string}`, newTargetWei],
         account: address!
       });
       updated++;
