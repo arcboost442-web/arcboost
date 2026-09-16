@@ -122,7 +122,7 @@ setCurrentDefaultGrad(formatUnits(defGrad as bigint, 6));
 
       // Cek balance treasury
       const balance = await publicClient.getBalance({ address: treasury as `0x${string}` });
-      setTreasuryBalance(parseFloat(formatUnits(balance, 6)).toFixed(6));
+      setTreasuryBalance(parseFloat(formatUnits(balance, 18)).toFixed(6));
 
       // Hitung total volume & graduated
       let vol = 0, grad = 0;
