@@ -76,7 +76,6 @@ export default function AdminPage() {
   const [treasuryBalance, setTreasuryBalance] = useState("0");
   const [treasuryAddress, setTreasuryAddress] = useState("");
   const [deployFee, setDeployFee] = useState("0");
-  const [rawDeployFee, setRawDeployFee] = useState("0");
   const [totalTokens, setTotalTokens] = useState(0);
   const [totalVolume, setTotalVolume] = useState(0);
   const [graduatedCount, setGraduatedCount] = useState(0);
@@ -88,7 +87,6 @@ export default function AdminPage() {
   const [newDeployFee, setNewDeployFee] = useState("");
   const [newGradTarget, setNewGradTarget] = useState("");
   const [defaultGradTarget, setDefaultGradTargetVal] = useState("");
-  const [rawDefaultGrad, setRawDefaultGrad] = useState("0");
 const [currentDefaultGrad, setCurrentDefaultGrad] = useState("0");
   const [txLoading, setTxLoading] = useState(false);
   const [txError, setTxError] = useState("");
@@ -118,10 +116,8 @@ const [currentDefaultGrad, setCurrentDefaultGrad] = useState("0");
 
 setTotalTokens(addrs.length);
 setDeployFee(formatUnits(fee, 18));
-setRawDeployFee(String(fee));
 setTreasuryAddress(treasury);
 setCurrentDefaultGrad(formatUnits(defGrad as bigint, 18));
-setRawDefaultGrad(String(defGrad));
 
       // Cek balance treasury
       const balance = await publicClient.getBalance({ address: treasury as `0x${string}` });
@@ -355,8 +351,6 @@ const handleEmergencyWithdraw = () => execTx(async () => {
             { label: "Factory Address", value: FACTORY_ADDRESS, mono: true },
             { label: "Treasury Address", value: loading ? "..." : treasuryAddress, mono: true },
             { label: "Deploy Fee", value: loading ? "..." : `${deployFee} USDC`, mono: false },
-            { label: "Deploy Fee (raw)", value: loading ? "..." : rawDeployFee, mono: false },
-            { label: "Default Grad Target (raw)", value: loading ? "..." : rawDefaultGrad, mono: false },
             { label: "Platform Fee", value: "1% per buy/sell", mono: false },
             { label: "Network", value: "Arc Testnet (Chain ID: 5042002)", mono: false },
           ].map((row, i, arr) => (
