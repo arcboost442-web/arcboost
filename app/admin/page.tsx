@@ -6,20 +6,20 @@ import { createPublicClient, http, formatEther, formatUnits, defineChain, parseE
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const arcTestnet = defineChain({
-  id: 5042002,
-  name: "Arc Testnet",
+const arcMainnet = defineChain({
+  id: 5042,
+  name: "Arc",
   nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 6 },
-  rpcUrls: { default: { http: ["https://rpc.testnet.arc.io"] } },
-  testnet: true,
+  rpcUrls: { default: { http: ["https://rpc.mainnet.arc.io"] } },
+  testnet: false,
 });
 
 const publicClient = createPublicClient({
-  chain: arcTestnet,
-  transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
+  chain: arcMainnet,
+  transport: http("https://rpc.mainnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
 });
 
-const FACTORY_ADDRESS = "0x8e3137f42CC0C4448ce8e5839595787fe16511C9" as const;
+const FACTORY_ADDRESS = "0x424b91F4B14Fe95B79f96BA1898Cb46CE0D2AFfc" as const;
 const OWNER_ADDRESS   = "0xF113960dDaBA8F45014Ef43177b1DC27f1f4E78a" as `0x${string}`;
 
 const FACTORY_ABI = [
@@ -352,7 +352,7 @@ const handleEmergencyWithdraw = () => execTx(async () => {
             { label: "Treasury Address", value: loading ? "..." : treasuryAddress, mono: true },
             { label: "Deploy Fee", value: loading ? "..." : `${deployFee} USDC`, mono: false },
             { label: "Platform Fee", value: "1% per buy/sell", mono: false },
-            { label: "Network", value: "Arc Testnet (Chain ID: 5042002)", mono: false },
+            { label: "Network", value: "Arc (Chain ID: 5042)", mono: false },
           ].map((row, i, arr) => (
             <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: i < arr.length - 1 ? `1px solid ${BORDER}` : "none", fontSize: "13px" }}>
               <span style={{ color: DIM }}>{row.label}</span>

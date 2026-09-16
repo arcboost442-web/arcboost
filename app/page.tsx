@@ -5,12 +5,12 @@ import { useAccount, useDisconnect, useConnect } from "wagmi";
 import { createPublicClient, http, formatEther, defineChain } from "viem";
 import Link from "next/link";
 
-const arcTestnet = defineChain({
-  id: 5042002,
-  name: "Arc Testnet",
+const arcMainnet = defineChain({
+  id: 5042,
+  name: "Arc",
   nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 6 },
-  rpcUrls: { default: { http: ["https://rpc.testnet.arc.io"] } },
-  testnet: true,
+  rpcUrls: { default: { http: ["https://rpc.mainnet.arc.io"] } },
+  testnet: false,
 });
 
 function getIdenticonColor(addr: string): string {
@@ -23,11 +23,11 @@ function getIdenticonColor(addr: string): string {
 }
 
 const publicClient = createPublicClient({
-  chain: arcTestnet,
-  transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
+  chain: arcMainnet,
+  transport: http("https://rpc.mainnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
 });
 
-const FACTORY_ADDRESS = "0x8e3137f42CC0C4448ce8e5839595787fe16511C9" as const;
+const FACTORY_ADDRESS = "0x424b91F4B14Fe95B79f96BA1898Cb46CE0D2AFfc" as const;
 const FACTORY_ABI = [
   { name: "getAllTokens", type: "function", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "address[]" }] },
   { name: "tokenInfo", type: "function", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [
@@ -234,7 +234,7 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
             </div>
             <div style={{ display: isMobile ? "none" : "flex", alignItems: "center", gap: "6px", padding: "5px 10px", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: "20px" }}>
               <div style={{ width: "6px", height: "6px", background: "#34D399", borderRadius: "50%", boxShadow: "0 0 6px #34D399", animation: "pulse 2s ease-in-out infinite" }} />
-              <span style={{ fontSize: "11px", color: "#34D399", fontWeight: 500 }}>Arc Testnet</span>
+              <span style={{ fontSize: "11px", color: "#34D399", fontWeight: 500 }}>Arc Mainnet</span>
             </div>
           </div>
           <div style={{ display: "flex", gap: isMobile ? "6px" : "10px", alignItems: "center" }}>
@@ -266,7 +266,7 @@ const [showHowItWorks, setShowHowItWorks] = useState(false); // ← tambah di si
         <div style={{ padding: "80px 32px 64px", textAlign: "center" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: BLUE_DIM, border: `1px solid ${BLUE_B}`, borderRadius: "20px", padding: "5px 14px", fontSize: "11px", fontWeight: 600, color: BLUE_LT, marginBottom: "28px", letterSpacing: ".04em", textTransform: "uppercase" }}>
             <div style={{ width: "6px", height: "6px", background: CYAN, borderRadius: "50%", boxShadow: `0 0 8px ${CYAN}` }} />
-            Live on Arc Testnet
+            Live on Arc
           </div>
           <h1 style={{ fontSize: "60px", fontWeight: 800, lineHeight: 1.08, color: TEXT, margin: "0 0 20px", letterSpacing: "-2px" }}>
   Launch your token.<br />
@@ -289,7 +289,7 @@ No code. No gatekeepers. Deploy a token in seconds, trade instantly on a bonding
         {/* STATS */}
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: "12px", padding: isMobile ? "0 16px" : "0 32px", maxWidth: "1100px", margin: "0 auto 32px" }}>
           {[
-            { label: "Tokens Launched", value: tokens.length.toString(), sub: "On Arc Testnet" },
+            { label: "Tokens Launched", value: tokens.length.toString(), sub: "On Arc" },
             { label: "Total Volume", value: `${totalVol.toFixed(3)} USDC`, sub: "All-time" },
             { label: "Avg. Weekly Tx Cost", value: "$0.004", sub: "Predictable fees" },
             { label: "Network", value: "Arc", sub: "Stablecoin-native L1" },

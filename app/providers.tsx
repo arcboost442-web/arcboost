@@ -5,9 +5,9 @@ import { injected, walletConnect } from "wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { defineChain } from "viem";
 
-const arcTestnet = defineChain({
-  id: 5042002,
-  name: "Arc Testnet",
+const arcMainnet = defineChain({
+  id: 5042,
+  name: "Arc",
   nativeCurrency: {
     name: "USDC",
     symbol: "USDC",
@@ -15,20 +15,20 @@ const arcTestnet = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ["https://rpc.testnet.arc.io"],
+      http: ["https://rpc.mainnet.arc.io"],
     },
   },
   blockExplorers: {
     default: {
       name: "ArcScan",
-      url: "https://testnet.arcscan.app",
+      url: "https://explorer.arc.io",
     },
   },
-  testnet: true,
+  testnet: false,
 });
 
 const config = createConfig({
-  chains: [arcTestnet],
+  chains: [arcMainnet],
   connectors: [
     injected(),
     walletConnect({
@@ -37,7 +37,7 @@ const config = createConfig({
     }),
   ],
   transports: {
-    [arcTestnet.id]: http("https://rpc.testnet.arc.io"),
+    [arcMainnet.id]: http("https://rpc.mainnet.arc.io"),
   },
   pollingInterval: 10000,
 });

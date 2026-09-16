@@ -5,15 +5,15 @@ import { useRouter } from "next/navigation";
 import { useAccount, useWalletClient } from "wagmi";
 import { parseEther, defineChain } from "viem";
 
-const arcTestnet = defineChain({
-  id: 5042002,
-  name: "Arc Testnet",
+const arcMainnet = defineChain({
+  id: 5042,
+  name: "Arc",
   nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 6 },
-  rpcUrls: { default: { http: ["https://rpc.testnet.arc.io"] } },
-  testnet: true,
+  rpcUrls: { default: { http: ["https://rpc.mainnet.arc.io"] } },
+  testnet: false,
 });
 
-const FACTORY_ADDRESS = "0x8e3137f42CC0C4448ce8e5839595787fe16511C9" as const;
+const FACTORY_ADDRESS = "0x424b91F4B14Fe95B79f96BA1898Cb46CE0D2AFfc" as const;
 const FACTORY_ABI = [
   { name: "createToken", type: "function", stateMutability: "payable",
     inputs: [

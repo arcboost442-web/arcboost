@@ -8,17 +8,17 @@ import dynamic from "next/dynamic";
 
 const PriceChart = dynamic(() => import("../../components/PriceChart"), { ssr: false });
 
-const arcTestnet = defineChain({
-  id: 5042002,
-  name: "Arc Testnet",
+const arcMainnet = defineChain({
+  id: 5042,
+  name: "Arc",
   nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 6 },
-  rpcUrls: { default: { http: ["https://rpc.testnet.arc.io"] } },
-  testnet: true,
+  rpcUrls: { default: { http: ["https://rpc.mainnet.arc.io"] } },
+  testnet: false,
 });
 
 const publicClient = createPublicClient({
-  chain: arcTestnet,
-  transport: http("https://rpc.testnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
+  chain: arcMainnet,
+  transport: http("https://rpc.mainnet.arc.io", { retryCount: 3, retryDelay: 2000, timeout: 30000 }),
 });
 
 const TOKEN_ABI = [
@@ -51,7 +51,7 @@ const TOKEN_ABI = [
   ]},
 ] as const;
 
-const EXPLORER_API_BASE = "https://testnet.arcscan.app";
+const EXPLORER_API_BASE = "https://explorer.arc.io";
 const BG      = "#08090F";
 const CARD    = "#0E1118";
 const CARD2   = "#111622";
@@ -176,7 +176,7 @@ export default function TokenPage() {
   const loadTxs = async () => {
   try {
     const res = await fetch(
-      `https://testnet.arcscan.app/api/v2/addresses/${tokenAddress}/logs`
+      `${EXPLORER_API_BASE}/api/v2/addresses/${tokenAddress}/logs`
     );
     if (!res.ok) throw new Error("Arcscan API error");
     const data = await res.json();
@@ -435,7 +435,7 @@ export default function TokenPage() {
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"16px"}}>
                 <div>
                   <div style={{fontSize:"13px",fontWeight:600,color:TEXT}}>Price Chart</div>
-                  <div style={{fontSize:"11px",color:DIM,marginTop:"2px"}}>Arc Testnet · USDC pair</div>
+                  <div style={{fontSize:"11px",color:DIM,marginTop:"2px"}}>Arc · USDC pair</div>
                 </div>
                 <div style={{display:"flex",gap:"2px",background:BG,border:`1px solid ${BORDER}`,borderRadius:"7px",padding:"3px"}}>
                   {["1H","4H","1D","ALL"].map(tf=>(
@@ -696,7 +696,7 @@ export default function TokenPage() {
                 {label:"Creator",value:`${token.creator.slice(0,6)}...${token.creator.slice(-4)}`,mono:true},
                 {label:"Contract",value:`${tokenAddress.slice(0,6)}...${tokenAddress.slice(-4)}`,mono:true},
                 {label:"Max Supply",value:"1,000,000,000"},
-                {label:"Network",value:"Arc Testnet",blue:true},
+                {label:"Network",value:"Arc",blue:true},
                 {label:"Status",value:token.graduated?"Graduated":"Bonding Curve",blue:true},
               ].map((row,i,arr)=>(
                 <div key={row.label} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:i<arr.length-1?`1px solid ${BORDER}`:"none",fontSize:"12px"}}>
