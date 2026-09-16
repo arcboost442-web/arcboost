@@ -271,8 +271,8 @@ export default function TokenPage() {
         const volume = Math.abs(ethC - ethCBefore);
         savePricePoint(ethC, totSup, volume);
         loadChartData(updatedToken);
+        loadTxs();
       }
-            loadTxs();
       if (updatedToken) loadHolders(updatedToken);
     } catch(err:any){ setError(err.message?.slice(0,120)||"Transaction failed."); }
     finally{ setTxLoading(false); }
