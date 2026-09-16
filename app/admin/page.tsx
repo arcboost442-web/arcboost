@@ -117,10 +117,10 @@ const [currentDefaultGrad, setCurrentDefaultGrad] = useState("0");
 ]);
 
 setTotalTokens(addrs.length);
-setDeployFee(formatUnits(fee, 6));
+setDeployFee(formatUnits(fee, 18));
 setRawDeployFee(String(fee));
 setTreasuryAddress(treasury);
-setCurrentDefaultGrad(formatUnits(defGrad as bigint, 6));
+setCurrentDefaultGrad(formatUnits(defGrad as bigint, 18));
 setRawDefaultGrad(String(defGrad));
 
       // Cek balance treasury
@@ -174,7 +174,7 @@ setRawDefaultGrad(String(defGrad));
   const handleSetDeployFee = () => execTx(async () => {
     if (!newDeployFee || isNaN(Number(newDeployFee))) throw new Error("Invalid fee amount.");
     if (!walletClient) throw new Error("Wallet not ready. Please reconnect.");
-    await walletClient.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setDeployFee", args: [parseUnits(newDeployFee, 6)], account: address! });
+    await walletClient.writeContract({ address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "setDeployFee", args: [parseUnits(newDeployFee, 18)], account: address! });
     setNewDeployFee("");
   });
 const handleSetDefaultGradTarget = () => execTx(async () => {
@@ -184,7 +184,7 @@ const handleSetDefaultGradTarget = () => execTx(async () => {
     address: FACTORY_ADDRESS,
     abi: FACTORY_ABI,
     functionName: "setDefaultGradTarget",
-    args: [parseUnits(defaultGradTarget, 6)],
+    args: [parseUnits(defaultGradTarget, 18)],
     account: address!,
   });
   setDefaultGradTargetVal("");
@@ -198,7 +198,7 @@ const handleSetGradTarget = () => execTx(async () => {
     address: FACTORY_ADDRESS, abi: FACTORY_ABI, functionName: "getAllTokens"
   });
 
-  const newTargetWei = parseUnits(newGradTarget, 6);
+  const newTargetWei = parseUnits(newGradTarget, 18);
   let updated = 0;
   let skipped = 0;
 
