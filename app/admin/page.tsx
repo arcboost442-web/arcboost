@@ -20,7 +20,7 @@ const publicClient = createPublicClient({
 });
 
 const FACTORY_ADDRESS = "0xaAa49773EA39aC5D5EEe9Ff3502Cd8015bfe8665" as const;
-const OWNER_ADDRESS   = "0x309159D51728E34bb31de78fBa3CcF5dE9951631" as `0x${string}`;
+const OWNER_ADDRESS   = "0xD989E696FBfA99E033f2114E10b48002857e1192" as `0x${string}`;
 
 const FACTORY_ABI = [
   { name: "getAllTokens",    type: "function", stateMutability: "view",     inputs: [],                                              outputs: [{ name: "", type: "address[]" }] },
